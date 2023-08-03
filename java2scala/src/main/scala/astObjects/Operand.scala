@@ -1,0 +1,4 @@
+
+class Operand(value: Literal) {
+
+}

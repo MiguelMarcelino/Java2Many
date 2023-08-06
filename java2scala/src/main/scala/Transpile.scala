@@ -1,20 +1,13 @@
 
+import org.eclipse.jdt.core.dom.*
+
 /**
  * Transpiles the Java AST representation into a string representation in Scala
  */
-class Transpile {
+class Transpile extends ASTVisitor {
 
-
-  def BinOp(): String = {
-    ""
-  }
-
-  def Class(): String = {
-    ""
-  }
-
-  def UnaryOp(): String = {
-    ""
+  def visit(node: : MethodInvocation): Boolean = {
+    true
   }
 
 }

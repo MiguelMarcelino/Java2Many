@@ -37,7 +37,7 @@ object Main extends App {
    * @param fileLocation - the location of the file to transpile
    */
   def transpileFile(fileLocation: File): Option[Result] = {
-    fileLocation.
+    Option.empty[Result]
   }
 
   /**
@@ -46,6 +46,6 @@ object Main extends App {
    * @param dirLocation - The location of the projectDirectory to transpile
    */
   def transpileDir(projectDirLocation: File): Option[Result] = {
-
+    Option.empty[Result]
   }
 }

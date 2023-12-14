@@ -1,4 +1,1 @@
-
-class Operand(value: Literal) {
-
-}
+final case class Operand(value: Literal)

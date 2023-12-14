@@ -16,9 +16,9 @@ object Main extends App {
       list match {
         case Nil => map
         case "--file" :: value :: tail =>
-          nextArg(map ++ Map("file" -> value.toString), tail)
+          nextArg(map ++ Map("file" -> value), tail)
         case "--dir" :: value :: tail =>
-          nextArg(map ++ Map("arg2" -> value.toString), tail)
+          nextArg(map ++ Map("arg2" -> value), tail)
         case string :: Nil =>
           nextArg(map ++ Map("filename" -> string), list.tail)
         case unknown :: _ =>
@@ -31,20 +31,18 @@ object Main extends App {
     println(options)
   }
 
-  /**
-   * Transpiles a single file from Java to Scala
-   *
-   * @param fileLocation - the location of the file to transpile
-   */
+  /** Transpiles a single file from Java to Scala
+    *
+    * @param fileLocation - the location of the file to transpile
+    */
   def transpileFile(fileLocation: File): Option[Result] = {
     Option.empty[Result]
   }
 
-  /**
-   * Transpiles a project directory from Java to Scala
-   *
-   * @param dirLocation - The location of the projectDirectory to transpile
-   */
+  /** Transpiles a project directory from Java to Scala
+    *
+    * @param dirLocation - The location of the projectDirectory to transpile
+    */
   def transpileDir(projectDirLocation: File): Option[Result] = {
     Option.empty[Result]
   }

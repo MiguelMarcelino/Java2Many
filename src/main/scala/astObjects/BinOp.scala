@@ -1,2 +1,1 @@
-
-class BinOp(left: Operand, right: Operand)
+final case class BinOp(left: Operand, right: Operand)

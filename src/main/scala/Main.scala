@@ -1,3 +1,5 @@
+import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser}
+
 object Main extends App {
 
   def main(args: Array[String]) {
@@ -46,4 +48,30 @@ object Main extends App {
   def transpileDir(projectDirLocation: File): Option[Result] = {
     Option.empty[Result]
   }
+
+  /** Testing code
+    * @return The result of the transpilation
+    */
+  def transpile(): Option[Result] = {
+    // TODO: This is just sample code
+    val document = new Nothing(
+      "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
+    )
+
+    // Create the ASTParser
+    val parser = ASTParser.newParser(AST.getJLSLatest())
+    // Set the source to be the document
+    parser.setSource(document.get.toCharArray)
+
+    val cu = parser.createAST(null)
+
+    val astTransformer = new ASTTransformer()
+    val astTranspiler = new ASTTranspiler()
+
+    val transformedAst = astTransformer.visitNode(cu)
+    val transpiledAst = astTranspiler.visitNode(transformedAst)
+
+    println(transpiledAst)
+  }
+
 }

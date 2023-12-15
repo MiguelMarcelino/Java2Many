@@ -1,8 +1,11 @@
-import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser}
+import org.eclipse.jdt.core.dom.rewrite.{ASTRewrite, ListRewrite}
+import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser, CompilationUnit}
+import org.eclipse.jface.text.Document
+import org.eclipse.text.edits.{TextEdit}
 
 object Main extends App {
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]) = {
     println("Welcome to Java2Scala, a Java to Scala transpiler (obviously...)")
 
     val usage = """
@@ -31,13 +34,15 @@ object Main extends App {
 
     val options = nextArg(Map(), args.toList)
     println(options)
+
+    transpile()
   }
 
   /** Transpiles a single file from Java to Scala
     *
     * @param fileLocation - the location of the file to transpile
     */
-  def transpileFile(fileLocation: File): Option[Result] = {
+  def transpileFile(fileLocation: File): Option[Result.Value] = {
     Option.empty[Result]
   }
 
@@ -45,14 +50,14 @@ object Main extends App {
     *
     * @param dirLocation - The location of the projectDirectory to transpile
     */
-  def transpileDir(projectDirLocation: File): Option[Result] = {
+  def transpileDir(projectDirLocation: File): Option[Result.Value] = {
     Option.empty[Result]
   }
 
   /** Testing code
     * @return The result of the transpilation
     */
-  def transpile(): Option[Result] = {
+  def transpile(): Unit = {
     // TODO: This is just sample code
     val document = new Nothing(
       "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
@@ -63,15 +68,46 @@ object Main extends App {
     // Set the source to be the document
     parser.setSource(document.get.toCharArray)
 
-    val cu = parser.createAST(null)
+    val node = parser.createAST(null)
+
+    val ast = cu.getAST
 
     val astTransformer = new ASTTransformer()
     val astTranspiler = new ASTTranspiler()
 
-    val transformedAst = astTransformer.visitNode(cu)
-    val transpiledAst = astTranspiler.visitNode(transformedAst)
+    val transformedAst = astTransformer.visit(node)
+    val transpiledAst = astTranspiler.visit(transformedAst)
 
     println(transpiledAst)
+  }
+
+  def rewriteAST(): Unit = {
+    // New example
+
+    // Prepare document (contains the code)
+    val document = new Document("import java.util.List;\nclass X {}\n")
+    val parser = ASTParser.newParser(AST.JLS8)
+    parser.setSource(document.get.toCharArray)
+
+    // Create the AST
+    val cu = parser.createAST(null).asInstanceOf[CompilationUnit]
+    val ast = cu.getAST
+    val id = ast.newImportDeclaration
+    id.setName(ast.newName(Array[String]("java", "util", "Set")))
+
+    // Create new rewriter
+    val rewriter = ASTRewrite.create(ast)
+    val lrw = rewriter.getListRewrite(cu, CompilationUnit.IMPORTS_PROPERTY)
+
+    // Insert into AST
+    lrw.insertLast(id, null)
+    val edits = rewriter.rewriteAST(document, null)
+    edits.apply(document)
+
+    // Result assertions
+    assert(
+      "import java.util.List;\nimport java.util.Set;\nclass X {}\n" == document.get
+    )
   }
 
 }

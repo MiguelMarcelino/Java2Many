@@ -1,3 +1,3 @@
-import org.eclipse.jdt.core.dom.MethodInvocation
+import org.eclipse.jdt.core.dom.{ASTVisitor, MethodInvocation}
 
-class ASTTranspiler extends AstPrinter {}
+class ASTTranspiler extends ASTVisitor {}

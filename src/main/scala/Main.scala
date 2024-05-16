@@ -1,41 +1,45 @@
+import org.eclipse.core.runtime.NullProgressMonitor
 import org.eclipse.jdt.core.dom.rewrite.{ASTRewrite, ListRewrite}
 import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser, CompilationUnit}
 import org.eclipse.jface.text.Document
-import org.eclipse.text.edits.{TextEdit}
+import org.eclipse.text.edits.TextEdit
 
-object Main extends App {
+import java.io.File
 
-  def main(args: Array[String]) = {
+object Main {
+
+  final def main(args: Array[String]) = {
     println("Welcome to Java2Scala, a Java to Scala transpiler (obviously...)")
 
     val usage = """
       Usage: java2scala [--file file] [--projectDir dir]
     """
 
-    if (args.length == 0) println(usage)
+//    if (args.length == 0) println(usage)
+//
+//    val options = parseArgs(Map(), args.toList)
+//    println(options)
 
-    def parseArgs(
-        map: Map[String, Any],
-        list: List[String]
-    ): Map[String, Any] = {
-      list match {
-        case Nil => map
-        case "--file" :: value :: tail =>
-          nextArg(map ++ Map("file" -> value), tail)
-        case "--dir" :: value :: tail =>
-          nextArg(map ++ Map("arg2" -> value), tail)
-        case string :: Nil =>
-          nextArg(map ++ Map("filename" -> string), list.tail)
-        case unknown :: _ =>
-          println("Unknown option " + unknown)
-          exit(1)
-      }
+    rewriteAST()
+  }
+
+  private def parseArgs(
+      map: Map[String, Any],
+      list: List[String]
+  ): Map[String, Any] = {
+    list match {
+      case Nil => map
+      case "--file" :: value :: tail =>
+        parseArgs(map ++ Map("file" -> value), tail)
+      case "--dir" :: value :: tail =>
+        parseArgs(map ++ Map("dir" -> value), tail)
+      case string :: Nil =>
+        parseArgs(map ++ Map("filename" -> string), list.tail)
+      case unknown :: _ =>
+        throw new IllegalArgumentException(
+          s"Failed to parse arguments. Unknown option $unknown"
+        )
     }
-
-    val options = nextArg(Map(), args.toList)
-    println(options)
-
-    transpile()
   }
 
   /** Transpiles a single file from Java to Scala
@@ -43,7 +47,7 @@ object Main extends App {
     * @param fileLocation - the location of the file to transpile
     */
   def transpileFile(fileLocation: File): Option[Result.Value] = {
-    Option.empty[Result]
+    Option.empty[Result.Value]
   }
 
   /** Transpiles a project directory from Java to Scala
@@ -51,7 +55,7 @@ object Main extends App {
     * @param dirLocation - The location of the projectDirectory to transpile
     */
   def transpileDir(projectDirLocation: File): Option[Result.Value] = {
-    Option.empty[Result]
+    Option.empty[Result.Value]
   }
 
   /** Testing code
@@ -59,26 +63,25 @@ object Main extends App {
     */
   def transpile(): Unit = {
     // TODO: This is just sample code
-    val document = new Nothing(
+    val document =
       "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
-    )
 
     // Create the ASTParser
     val parser = ASTParser.newParser(AST.getJLSLatest())
     // Set the source to be the document
-    parser.setSource(document.get.toCharArray)
+    parser.setSource(document.toCharArray)
 
-    val node = parser.createAST(null)
+    val node = parser.createAST(new NullProgressMonitor())
 
-    val ast = cu.getAST
+    val ast: AST = node.getAST
 
     val astTransformer = new ASTTransformer()
     val astTranspiler = new ASTTranspiler()
 
-    val transformedAst = astTransformer.visit(node)
-    val transpiledAst = astTranspiler.visit(transformedAst)
+    // val transformedAst = astTransformer.visit(node)
+    //val transpiledAst = astTranspiler.visit(transformedAst)
 
-    println(transpiledAst)
+    //println(transpiledAst)
   }
 
   def rewriteAST(): Unit = {
@@ -90,14 +93,15 @@ object Main extends App {
     parser.setSource(document.get.toCharArray)
 
     // Create the AST
-    val cu = parser.createAST(null).asInstanceOf[CompilationUnit]
-    val ast = cu.getAST
+    val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
+    val ast = compilationUnit.getAST
     val id = ast.newImportDeclaration
     id.setName(ast.newName(Array[String]("java", "util", "Set")))
 
     // Create new rewriter
     val rewriter = ASTRewrite.create(ast)
-    val lrw = rewriter.getListRewrite(cu, CompilationUnit.IMPORTS_PROPERTY)
+    val lrw =
+      rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY)
 
     // Insert into AST
     lrw.insertLast(id, null)
@@ -105,6 +109,7 @@ object Main extends App {
     edits.apply(document)
 
     // Result assertions
+    println(document.get)
     assert(
       "import java.util.List;\nimport java.util.Set;\nclass X {}\n" == document.get
     )

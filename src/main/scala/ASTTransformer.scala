@@ -23,10 +23,10 @@ class ASTTransformer extends ASTVisitor {
     methodInvocation.setName(ast.newSimpleName("println"))
     val literal = ast.newStringLiteral
     literal.setLiteralValue("Hello, World")
-    methodInvocation.arguments.add(literal)
+    //methodInvocation.arguments.add(literal)
 
     // Append the statement
-    node.getBody.statements.add(ast.newExpressionStatement(methodInvocation))
+    //node.getBody.statements.add(methodInvocation)
     super.visit(node)
   }
 

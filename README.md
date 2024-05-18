@@ -1,5 +1,5 @@
-# Java2Scala
-A Java to Scala Transpiler
+# Scala2Go
+A Scala to Go Transpiler
 
 ## Requirements
 - Java 17

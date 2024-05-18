@@ -33,7 +33,7 @@ parser.setKind(ASTParser.K_COMPILATION_UNIT)
 // Parse the code and get the AST
 val astNode: ASTNode = parser.createAST(null)
 
-val astVisitor = new ASTVisitor() {
+val astVisitor = new RecursiveVisit() {
   override def visit(node: MethodInvocation): Boolean = {
     val name = node.getName()
     name.setIdentifier("hello")

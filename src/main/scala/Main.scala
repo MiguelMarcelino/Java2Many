@@ -20,7 +20,7 @@ object Main {
 //    val options = parseArgs(Map(), args.toList)
 //    println(options)
 
-    rewriteAST()
+    testTranspile()
   }
 
   private def parseArgs(
@@ -61,7 +61,7 @@ object Main {
   /** Testing code
     * @return The result of the transpilation
     */
-  def transpile(): Unit = {
+  def testTranspile(): Unit = {
     // TODO: This is just sample code
     val document =
       "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
@@ -75,44 +75,8 @@ object Main {
 
     val ast: AST = node.getAST
 
-    val astTransformer = new ASTTransformer()
+    val astTransformer = new ASTTransformerImpl(Document(document))
     val astTranspiler = new ASTTranspiler()
-
-    // val transformedAst = astTransformer.visit(node)
-    //val transpiledAst = astTranspiler.visit(transformedAst)
-
-    //println(transpiledAst)
-  }
-
-  def rewriteAST(): Unit = {
-    // New example
-
-    // Prepare document (contains the code)
-    val document = new Document("import java.util.List;\nclass X {}\n")
-    val parser = ASTParser.newParser(AST.JLS8)
-    parser.setSource(document.get.toCharArray)
-
-    // Create the AST
-    val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
-    val ast = compilationUnit.getAST
-    val id = ast.newImportDeclaration
-    id.setName(ast.newName(Array[String]("java", "util", "Set")))
-
-    // Create new rewriter
-    val rewriter = ASTRewrite.create(ast)
-    val lrw =
-      rewriter.getListRewrite(compilationUnit, CompilationUnit.IMPORTS_PROPERTY)
-
-    // Insert into AST
-    lrw.insertLast(id, null)
-    val edits = rewriter.rewriteAST(document, null)
-    edits.apply(document)
-
-    // Result assertions
-    println(document.get)
-    assert(
-      "import java.util.List;\nimport java.util.Set;\nclass X {}\n" == document.get
-    )
   }
 
 }

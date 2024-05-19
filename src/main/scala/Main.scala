@@ -1,15 +1,12 @@
-import org.eclipse.core.runtime.NullProgressMonitor
-import org.eclipse.jdt.core.dom.rewrite.{ASTRewrite, ListRewrite}
-import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser, CompilationUnit}
 import org.eclipse.jface.text.Document
-import org.eclipse.text.edits.TextEdit
+import transformers.ASTTransformerImpl
 
 import java.io.File
 
 object Main {
 
   final def main(args: Array[String]) = {
-    println("Welcome to Java2Scala, a Java to Scala transpiler (obviously...)")
+    println("Welcome to Scala2Go, a Scala to Go transpiler (obviously...)")
 
     val usage = """
       Usage: java2scala [--file file] [--projectDir dir]
@@ -62,21 +59,18 @@ object Main {
     * @return The result of the transpilation
     */
   def testTranspile(): Unit = {
-    // TODO: This is just sample code
-    val document =
+    // TODO: This is just test code
+    val document = Document(
       "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
+    )
+    val astTransformer = new ASTTransformerImpl(document)
 
-    // Create the ASTParser
-    val parser = ASTParser.newParser(AST.getJLSLatest())
-    // Set the source to be the document
-    parser.setSource(document.toCharArray)
+    println(document.get)
 
-    val node = parser.createAST(new NullProgressMonitor())
+//    assert(
+//      "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}" == document.get
+//    )
 
-    val ast: AST = node.getAST
-
-    val astTransformer = new ASTTransformerImpl(Document(document))
-    val astTranspiler = new ASTTranspiler()
   }
 
 }

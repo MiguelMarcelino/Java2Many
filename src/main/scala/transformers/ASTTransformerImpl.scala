@@ -1,12 +1,12 @@
+package transformers
+
 import org.eclipse.jdt.core.dom.*
-import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
 import org.eclipse.jdt.internal.compiler.ast.{
   MethodDeclaration,
   SwitchStatement
 }
 import org.eclipse.jdt.internal.compiler.lookup.{BlockScope, ClassScope}
 import org.eclipse.jface.text.Document
-import transformers.ASTTransformer
 
 /** Applies transformations to the Java AST
   */

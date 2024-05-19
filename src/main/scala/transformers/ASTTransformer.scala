@@ -1,19 +1,19 @@
 package transformers
 
 import org.eclipse.jdt.core.dom.*
-import org.eclipse.jdt.core.dom.rewrite.{ASTRewrite, ListRewrite}
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
 import org.eclipse.jdt.internal.compiler.ASTVisitor
 import org.eclipse.jface.text.Document
 import org.eclipse.text.edits.{TextEdit, UndoEdit}
 
 import scala.collection.mutable.ListBuffer
 
-class ASTTransformer(document: Document) extends ASTVisitor {
+abstract class ASTTransformer(document: Document) extends ASTVisitor {
 
-  private val parser = ASTParser.newParser(AST.JLS8)
-  private val astEdits: ListBuffer[UndoEdit] = ListBuffer.empty[UndoEdit]
+  private final val parser = ASTParser.newParser(AST.JLS8)
+  private final val astEdits: ListBuffer[UndoEdit] = ListBuffer.empty[UndoEdit]
 
-  def getAST(): AST = {
+  private[transformers] def getAST(): AST = {
     parser.setSource(document.get.toCharArray)
     val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
     compilationUnit.getAST

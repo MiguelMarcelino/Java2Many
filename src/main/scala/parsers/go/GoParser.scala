@@ -25,7 +25,9 @@ class GoParser extends ASTParser {
 
   def visit(node: Block): String = { "" }
 
-  def visit(node: BlockComment): String = { "" }
+  def visit(node: BlockComment): String = {
+    s"/* ${node.toString} */"
+  }
 
   def visit(node: BooleanLiteral): String = { "" }
 
@@ -41,7 +43,9 @@ class GoParser extends ASTParser {
 
   def visit(node: ClassInstanceCreation): String = { "" }
 
-  def visit(node: CompilationUnit): String = { "" }
+  def visit(node: CompilationUnit): String = {
+    visit(node.getModule)
+  }
 
   def visit(node: ConditionalExpression): String = { "" }
 
@@ -109,7 +113,9 @@ class GoParser extends ASTParser {
 
   def visit(node: LambdaExpression): String = { "" }
 
-  def visit(node: LineComment): String = { "" }
+  def visit(node: LineComment): String = {
+    s"// ${node.toString}"
+  }
 
   def visit(node: MarkerAnnotation): String = { "" }
 
@@ -121,7 +127,14 @@ class GoParser extends ASTParser {
 
   def visit(node: MethodRefParameter): String = { "" }
 
-  def visit(node: MethodDeclaration): String = { "" }
+  def visit(node: MethodDeclaration): String = {
+    val body = visit(node.getBody)
+    val arguments = node.getJavadoc
+
+    s"""func ${node.getName} () {
+       |  $body
+       |}""".stripMargin
+  }
 
   def visit(node: MethodInvocation): String = { "" }
 

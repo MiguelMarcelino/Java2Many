@@ -1,5 +1,6 @@
 package transformers
 
+import helpers.AstHelpers
 import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.internal.compiler.lookup.{BlockScope, ClassScope}
 import org.eclipse.jface.text.Document
@@ -16,7 +17,7 @@ class ASTTransformerImpl(document: Document) extends ASTTransformer(document) {
 
   override def visit(node: MethodDeclaration): Boolean = {
     // Example code to add new expression to method invocations
-    val ast = getAST()
+    val ast = AstHelpers.getAST(parser, document)
 
     // Add a new method invocation: System.out.println("Hello, World")
     val methodInvocation = ast.newMethodInvocation

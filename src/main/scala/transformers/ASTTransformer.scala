@@ -2,7 +2,6 @@ package transformers
 
 import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
-import org.eclipse.jdt.internal.compiler.ASTVisitor
 import org.eclipse.jface.text.Document
 import org.eclipse.text.edits.{TextEdit, UndoEdit}
 
@@ -17,6 +16,12 @@ abstract class ASTTransformer(document: Document) extends ASTVisitor {
     parser.setSource(document.get.toCharArray)
     val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
     compilationUnit.getAST
+  }
+
+  def transform(): Unit = {
+    parser.setSource(document.get.toCharArray)
+    val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
+    compilationUnit.accept(this)
   }
 
   def getTransformations(): Seq[UndoEdit] = astEdits.toSeq

@@ -9,14 +9,10 @@ import scala.collection.mutable.ListBuffer
 
 abstract class ASTTransformer(document: Document) extends ASTVisitor {
 
-  private final val parser = ASTParser.newParser(AST.JLS8)
   private final val astEdits: ListBuffer[UndoEdit] = ListBuffer.empty[UndoEdit]
 
-  private[transformers] def getAST(): AST = {
-    parser.setSource(document.get.toCharArray)
-    val compilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
-    compilationUnit.getAST
-  }
+  // TODO: This should be a parameter
+  private[transformers] final val parser = ASTParser.newParser(AST.JLS8)
 
   def transform(): Unit = {
     parser.setSource(document.get.toCharArray)

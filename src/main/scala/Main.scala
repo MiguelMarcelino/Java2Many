@@ -1,4 +1,7 @@
+import helpers.AstHelpers
+import org.eclipse.jdt.core.dom.{AST, ASTParser}
 import org.eclipse.jface.text.Document
+import parsers.go.GoParser
 import transformers.ASTTransformerImpl
 
 import java.io.File
@@ -55,23 +58,40 @@ object Main {
     Option.empty[Result.Value]
   }
 
+  def transpile(document: Document) = {
+    val transformers = List(
+      new ASTTransformerImpl(document)
+    )
+
+    transformers.foreach(_.transform())
+
+    // TODO: Move parser and JavaVersion to a separate class
+    val parser = ASTParser.newParser(AST.JLS8)
+    val astNode = AstHelpers.getRoot(parser, document)
+
+    // TODO: Parse the code using the parser specified in command line argument
+    println(astNode.getClass.getName)
+    val languageParser = new GoParser
+    val transpiledCode = languageParser.visit(astNode)
+
+    println(transpiledCode)
+  }
+
   /** Testing code
     * @return The result of the transpilation
     */
-  def testTranspile(): Unit = {
-    // TODO: This is just test code
+  private def testTranspile(): Unit = {
+    // TODO: This is just test code. It should be removed when we start parsing code from files.
     val document = Document(
-      "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
+      "import java.util.List;" + "\n" +
+        " class X {" + "\n" +
+        "  public void deleteme() { }" + "\n" +
+        "}".stripMargin
     )
-    val astTransformer = new ASTTransformerImpl(document)
-    astTransformer.transform()
 
-    println(document.get)
+    val transpiledCode = transpile(document)
 
-//    assert(
-//      "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}" == document.get
-//    )
-
+    println(transpiledCode)
   }
 
 }

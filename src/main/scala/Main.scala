@@ -64,6 +64,7 @@ object Main {
       "import java.util.List;\n\nclass X\n{\n\n\tpublic void deleteme()\n\t{\n\t}\n\n}\n"
     )
     val astTransformer = new ASTTransformerImpl(document)
+    astTransformer.transform()
 
     println(document.get)
 

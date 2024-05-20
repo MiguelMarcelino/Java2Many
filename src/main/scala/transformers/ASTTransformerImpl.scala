@@ -1,10 +1,6 @@
 package transformers
 
 import org.eclipse.jdt.core.dom.*
-import org.eclipse.jdt.internal.compiler.ast.{
-  MethodDeclaration,
-  SwitchStatement
-}
 import org.eclipse.jdt.internal.compiler.lookup.{BlockScope, ClassScope}
 import org.eclipse.jface.text.Document
 
@@ -12,21 +8,13 @@ import org.eclipse.jface.text.Document
   */
 class ASTTransformerImpl(document: Document) extends ASTTransformer(document) {
 
-  private val parser = ASTParser.newParser(AST.JLS8)
-
-  override def visit(
-      switchStatement: SwitchStatement,
-      scope: BlockScope
-  ): Boolean = {
+  override def visit(node: SwitchStatement): Boolean = {
     println("Hello")
 
     true
   }
 
-  override def visit(
-      methodDeclaration: MethodDeclaration,
-      scope: ClassScope
-  ): Boolean = {
+  override def visit(node: MethodDeclaration): Boolean = {
     // Example code to add new expression to method invocations
     val ast = getAST()
 

@@ -1,4 +1,4 @@
-package transformers
+package base
 
 import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
@@ -12,7 +12,7 @@ abstract class ASTTransformer(document: Document) extends ASTVisitor {
   private final val astEdits: ListBuffer[UndoEdit] = ListBuffer.empty[UndoEdit]
 
   // TODO: This should be a parameter
-  private[transformers] final val parser = ASTParser.newParser(AST.JLS8)
+  final val parser = ASTParser.newParser(AST.JLS9)
 
   def transform(): Unit = {
     parser.setSource(document.get.toCharArray)

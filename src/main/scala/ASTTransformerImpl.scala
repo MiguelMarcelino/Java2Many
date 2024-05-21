@@ -1,6 +1,4 @@
-package transformers
-
-import helpers.AstHelpers
+import base.{ASTTransformer, AstHelpers}
 import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.internal.compiler.lookup.{BlockScope, ClassScope}
 import org.eclipse.jface.text.Document

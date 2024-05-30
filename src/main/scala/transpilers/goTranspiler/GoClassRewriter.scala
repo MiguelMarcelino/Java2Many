@@ -1,21 +1,17 @@
 package transpilers.goTranspiler
 
 import base.ASTTransformer
-import base.helpers.AstHelpers
+import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
-import org.eclipse.jdt.core.dom.{
-  ASTNode,
-  MethodDeclaration,
-  SingleVariableDeclaration,
-  TypeDeclaration
-}
 import org.eclipse.jface.text.Document
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 
 class GoClassRewriter(document: Document) extends ASTTransformer(document) {
 
-  val functionsToChange = ListBuffer[String]()
+  // A map of all the methods that have been modified within each class.
+  // Mapping: class name -> method name
+  private val modifiedMethods = mutable.Map[String, String]()
 
   /** Rewrites method declarations to allow for dispatching based on the classes type.
     *
@@ -26,8 +22,8 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
     // Add a new argument to each method to allow dispatching on the class.
     val parent = node.getParent
     val newNode = parent match {
-      case t: TypeDeclaration =>
-        val className = t.getName.getIdentifier
+      case typeDeclaration: TypeDeclaration =>
+        val className = typeDeclaration.getName.getIdentifier
         val parameterList = node.parameters()
 
         val ast = node.getAST
@@ -41,6 +37,32 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
         )
 
         addParameters(node, List(variableDeclaration))
+
+        modifiedMethods.addOne(
+          (typeDeclaration.getName.getIdentifier, node.getName.getIdentifier)
+        )
+    }
+
+    true
+  }
+
+  override def visit(node: MethodInvocation): Boolean = {
+    // There are two types of invocations
+    // 1. Invocations within the current class
+    // 2. Invocations from another scope
+
+    // Check if the method invocation corresponds to a modified method
+    if (modifiedMethods.contains(node.getName.getIdentifier)) {
+      val ast = node.getAST
+      val rewriter = ASTRewrite.create(ast)
+
+      // Create the new argument
+      val newArg = ast.newSimpleName("s")
+
+      // Use ListRewrite to add the new argument to the method invocation
+      val listRewrite =
+        rewriter.getListRewrite(node, MethodInvocation.ARGUMENTS_PROPERTY)
+      listRewrite.insertFirst(newArg, null)
     }
 
     true
@@ -62,6 +84,4 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
     // Apply the changes to the document.
     applyTransformation(edits)
   }
-
-  // TODO: We also have to rewrite method calls to add a new class argument.
 }

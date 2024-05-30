@@ -71,8 +71,8 @@ class GoParser extends ASTParser {
       .imports()
       .toArray()
       .map {
-        case node: ImportDeclaration =>
-          visit(node)
+        case n: ImportDeclaration =>
+          visit(n)
         case _ => ""
       }
       .mkString("\n")
@@ -97,8 +97,8 @@ class GoParser extends ASTParser {
           .types()
           .toArray()
           .map {
-            case node: ASTNode =>
-              visit(node)
+            case n: ASTNode =>
+              visit(n)
             case _ => ""
           }
           .mkString("\n")
@@ -346,7 +346,7 @@ class GoParser extends ASTParser {
     val fields = node.getFields.map(node => visit(node)).mkString("\n")
     val methods = node.getMethods.map(node => visit(node)).mkString("\n")
 
-    s"""struct ${node.getName} {
+    s"""type ${node.getName} struct {
        |  $fields
        |}
        |

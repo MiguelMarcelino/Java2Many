@@ -2,8 +2,13 @@ package base
 
 import org.eclipse.jdt.core.dom.*
 
-import scala.collection.mutable.ListBuffer
-
+/** Defines the methods that must be implemented by any parser that
+  * wants to convert a Java AST to a specific target language.
+  *
+  * It extends the ASTNodeVisitor trait, which defines the visit method for all
+  * the AST nodes. The ASTParser trait defines the visit method for the type-specific
+  * AST nodes.
+  */
 trait ASTParser {
 
   // A dumb visit method
@@ -133,6 +138,9 @@ trait ASTParser {
     }
   }
 
+  /** The map of types to their specific types in the target language.
+    * Every parser must define their own map.
+    */
   val typesMap: Map[String, String]
 
   /** Visits the given type-specific AST node.

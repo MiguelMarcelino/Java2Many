@@ -9,7 +9,7 @@ import java.io.File
 object Main {
 
   final def main(args: Array[String]) = {
-    println("Welcome to Scala2Many, a Scala to many transpiler (obviously...)")
+    println("Welcome to Java2Many, a Java to many transpiler (obviously...)")
 
     val usage = """
       Usage: java2scala [--file file] [--projectDir dir]

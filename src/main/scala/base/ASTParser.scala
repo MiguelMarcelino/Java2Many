@@ -849,7 +849,10 @@ trait ASTParser {
     * @return the resulting code as a string
     */
   def visit(node: Type): String = {
-    typesMap(node.toString)
+    node.toString match {
+      case n if typesMap.contains(n) => typesMap(n.toString)
+      case _                         => node.toString
+    }
   }
 
   /** Visits the given type-specific AST node.

@@ -208,7 +208,15 @@ class GoParser extends ASTParser {
   override def visit(node: MethodRefParameter): String = { "" }
 
   override def visit(node: MethodDeclaration): String = {
-    val parameters = node.parameters()
+    val parameters = node
+      .parameters()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
     val isPrivate = node.modifiers().toArray().exists {
       case modifier: Modifier =>
@@ -225,7 +233,7 @@ class GoParser extends ASTParser {
 
     val nodeBody = visit(node.getBody)
 
-    s"""func $parsedFuncName () {
+    s"""func $parsedFuncName ($parameters) {
        |  $nodeBody
        |}""".stripMargin
   }
@@ -308,7 +316,11 @@ class GoParser extends ASTParser {
 
   override def visit(node: SingleMemberAnnotation): String = { "" }
 
-  override def visit(node: SingleVariableDeclaration): String = { "" }
+  override def visit(node: SingleVariableDeclaration): String = {
+    val typeName = visit(node.getType)
+    val name = visit(node.getName)
+    s"$name $typeName"
+  }
 
   override def visit(node: StringLiteral): String = { "" }
 

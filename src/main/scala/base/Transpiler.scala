@@ -3,7 +3,6 @@ package base
 import base.helpers.AstHelpers
 import org.eclipse.jdt.core.dom.{AST, ASTParser}
 import org.eclipse.jface.text.Document
-import transpilers.goTranspiler.GoParser
 
 trait Transpiler(document: Document) {
 

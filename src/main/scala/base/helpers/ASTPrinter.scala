@@ -1,4 +1,4 @@
-package base
+package base.helpers
 
 import org.eclipse.jdt.core.dom.{ASTNode, ASTVisitor}
 

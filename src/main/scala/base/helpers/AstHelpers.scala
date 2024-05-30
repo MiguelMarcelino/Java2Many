@@ -1,5 +1,6 @@
-package base
+package base.helpers
 
+import base.helpers.ASTPrinter
 import org.eclipse.jdt.core.dom.{AST, ASTNode, ASTParser, CompilationUnit}
 import org.eclipse.jface.text.Document
 

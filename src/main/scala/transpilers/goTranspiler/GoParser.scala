@@ -5,6 +5,19 @@ import org.eclipse.jdt.core.dom.*
 
 class GoParser extends ASTParser {
 
+  val typesMap = Map(
+    "int" -> "int",
+    "boolean" -> "bool",
+    "char" -> "rune",
+    "byte" -> "byte",
+    "short" -> "int16",
+    "long" -> "int64",
+    "float" -> "float32",
+    "double" -> "float64",
+    "String" -> "string",
+    "void" -> "void"
+  )
+
   override def visit(node: AnnotationTypeDeclaration): String = { "" }
 
   override def visit(node: AnnotationTypeMemberDeclaration): String = { "" }
@@ -23,7 +36,17 @@ class GoParser extends ASTParser {
 
   override def visit(node: Assignment): String = { "" }
 
-  override def visit(node: Block): String = { "" }
+  override def visit(node: Block): String = {
+    node
+      .statements()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString("\n")
+  }
 
   override def visit(node: BlockComment): String = {
     s"/* ${node.toString} */"
@@ -44,7 +67,52 @@ class GoParser extends ASTParser {
   override def visit(node: ClassInstanceCreation): String = { "" }
 
   override def visit(node: CompilationUnit): String = {
-    visit(node.getModule)
+    val imports = node
+      .imports()
+      .toArray()
+      .map {
+        case node: ImportDeclaration =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString("\n")
+
+    // As per the documentation, CompilationUnit is either an OrdinaryCompilationUnit or a ModularCompilationUnit
+    //
+    // OrdinaryCompilationUnit:
+    //      [ PackageDeclaration ]
+    //          { ImportDeclaration }
+    //          { TypeDeclaration | EnumDeclaration | AnnotationTypeDeclaration | <b>;</b> }
+    // ModularCompilationUnit:
+    //      {ImportDeclaration}
+    //           ModuleDeclaration
+
+    val isOrdinaryCompilationUnit = node.getPackage != null
+
+    isOrdinaryCompilationUnit match {
+      case true => // It is an OrdinaryCompilationUnit
+        val pkg = visit(node.getPackage)
+
+        val body = node
+          .types()
+          .toArray()
+          .map {
+            case node: ASTNode =>
+              visit(node)
+            case _ => ""
+          }
+          .mkString("\n")
+
+        s"""$pkg
+           |$imports
+           |
+           |$body""".stripMargin
+      case _ => // Otherwise, it is a ModularCompilationUnit
+        val moduleDeclaration = visit(node.getModule)
+        s"""$imports
+           |
+           |$moduleDeclaration""".stripMargin
+    }
   }
 
   override def visit(node: ConditionalExpression): String = { "" }
@@ -76,13 +144,24 @@ class GoParser extends ASTParser {
   override def visit(node: FieldAccess): String = { "" }
 
   override def visit(node: FieldDeclaration): String = {
-    node.getType.toString
+    val declarationType = visit(node.getType)
+    val declarationNames = node
+      .fragments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+    val declarationValue = declarationNames.headOption.getOrElse("")
+
+    s"$declarationValue $declarationType"
   }
 
   override def visit(node: ForStatement): String = {
     val nodeBody = visit(node.getBody)
     s"""for () {
-       |$nodeBody
+       |  $nodeBody
        |}""".stripMargin
   }
 
@@ -96,7 +175,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: InfixExpression): String = { "" }
 
-  override def visit(node: Initializer): String = { "" }
+  override def visit(node: Initializer): String = {
+    visit(node.getBody)
+  }
 
   override def visit(node: InstanceofExpression): String = { "" }
 
@@ -154,17 +235,19 @@ class GoParser extends ASTParser {
   override def visit(node: Modifier): String = { "" }
 
   override def visit(node: ModuleDeclaration): String = {
-//    node
-//      .moduleStatements()
-//      .toArray()
-//      .map {
-//        case methodDeclaration: MethodDeclaration =>
-//          visit(methodDeclaration)
-//        case _ => ""
-//      }
-//      .mkString("\n")
+    val statements = node
+      .moduleStatements()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString("\n")
 
-    ""
+    s"""module ${node.getName.getFullyQualifiedName} {
+       |  $statements
+       |}""".stripMargin
   }
 
   override def visit(node: ModuleModifier): String = { "" }
@@ -183,7 +266,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: OpensDirective): String = { "" }
 
-  override def visit(node: PackageDeclaration): String = { "" }
+  override def visit(node: PackageDeclaration): String = {
+    s"package ${node.getName.getFullyQualifiedName}"
+  }
 
   override def visit(node: ParameterizedType): String = { "" }
 
@@ -213,9 +298,13 @@ class GoParser extends ASTParser {
 
   override def visit(node: ReturnStatement): String = { "" }
 
-  override def visit(node: SimpleName): String = { "" }
+  override def visit(node: SimpleName): String = {
+    s"${node.getIdentifier}"
+  }
 
-  override def visit(node: SimpleType): String = { "" }
+  override def visit(node: SimpleType): String = {
+    s"${node.getName.getFullyQualifiedName}"
+  }
 
   override def visit(node: SingleMemberAnnotation): String = { "" }
 
@@ -253,15 +342,41 @@ class GoParser extends ASTParser {
 
   override def visit(node: TryStatement): String = { "" }
 
-  override def visit(node: TypeDeclaration): String = { "" }
+  override def visit(node: TypeDeclaration): String = {
+    val fields = node.getFields.map(node => visit(node)).mkString("\n")
+    val methods = node.getMethods.map(node => visit(node)).mkString("\n")
+
+    s"""struct ${node.getName} {
+       |  $fields
+       |}
+       |
+       |$methods""".stripMargin
+  }
 
   override def visit(node: TypeDeclarationStatement): String = { "" }
 
-  override def visit(node: TypeLiteral): String = { "" }
+  override def visit(node: TypeLiteral): String = {
+    s"${node.getType.toString}"
+  }
 
-  override def visit(node: TypeMethodReference): String = { "" }
+  override def visit(node: TypeMethodReference): String = {
+    s"${node.getType.toString}"
+  }
 
-  override def visit(node: TypeParameter): String = { "" }
+  override def visit(node: TypeParameter): String = {
+    val name = node.getName.getIdentifier
+    val bounds = node
+      .typeBounds()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"$name $bounds"
+  }
 
   override def visit(node: TypePattern): String = { "" }
 

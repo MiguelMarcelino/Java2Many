@@ -133,6 +133,8 @@ trait ASTParser {
     }
   }
 
+  val typesMap: Map[String, String]
+
   /** Visits the given type-specific AST node.
     *
     * @param node the node to visit
@@ -831,6 +833,16 @@ trait ASTParser {
     * @return the resulting code as a string
     */
   def visit(node: TryStatement): String
+
+  /** Visits the given type-specific AST node.
+    * This method maps the Scala types to their specific types in the target language
+    *
+    * @param node the node to visit
+    * @return the resulting code as a string
+    */
+  def visit(node: Type): String = {
+    typesMap(node.toString)
+  }
 
   /** Visits the given type-specific AST node.
     *

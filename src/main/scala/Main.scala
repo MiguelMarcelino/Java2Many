@@ -72,6 +72,7 @@ object Main {
 
     // Helper code to print AST
     // println(AstHelpers.printAST(parser, document))
+    println("--------------")
 
     // TODO: Parse the code using the parser that is linked to a specific command line argument (allow multiple languages)
     val languageParser = new GoParser
@@ -84,7 +85,8 @@ object Main {
   private def testTranspile(): Unit = {
     // TODO: This is just test code. It should be removed when we start parsing code from files.
     val document = Document(
-      "import java.util.List;" + "\n" +
+      "package transpiled;" +
+        "import java.util.List;" + "\n" +
         " class X(String animal) {" + "\n" +
         "  public void deleteme() { }" + "\n" +
         "}".stripMargin

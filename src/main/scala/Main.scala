@@ -84,11 +84,16 @@ object Main {
     val document = Document(
       "package transpiled;" +
         "import java.util.List;" + "\n" +
-        " class X(String animal) {" +
+        "class X(Int something) {" + "\n" +
         "   public void callMe(Int arg1) { println(arg1); }" + "\n" +
-        "   " + "\n" +
         "   public void deleteMe() {" + "\n" +
         "     callMe(1); " + "\n" +
+        "   }" + "\n" +
+        "}" + "\n" +
+        "class Y(String name) {" + "\n" +
+        "   public void testFunc(Int arg1) { " + "\n" +
+        "     X x = X(1);" + "\n" +
+        "     void d = x.callMe(2);" + "\n" +
         "   }" + "\n" +
         "}".stripMargin
     )

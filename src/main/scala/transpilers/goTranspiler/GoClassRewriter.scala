@@ -5,13 +5,7 @@ import org.eclipse.jdt.core.dom.*
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite
 import org.eclipse.jface.text.Document
 
-import scala.collection.mutable
-
 class GoClassRewriter(document: Document) extends ASTTransformer(document) {
-
-  // A map of all the methods that have been modified within each class.
-  // Mapping: class name -> method name
-  private val modifiedMethods = mutable.Map[String, String]()
 
   /** Rewrites method declarations to allow for dispatching based on the classes type.
     *
@@ -20,27 +14,23 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
     */
   override def visit(node: MethodDeclaration): Boolean = {
     // Add a new argument to each method to allow dispatching on the class.
-    val parent = node.getParent
-    val newNode = parent match {
+    node.getParent match {
       case typeDeclaration: TypeDeclaration =>
         val className = typeDeclaration.getName.getIdentifier
-        val parameterList = node.parameters()
 
         val ast = node.getAST
 
+        // The parameter name is the class name in lowercase
+        val parameterName = className.toLowerCase()
         val variableDeclaration = ast.newSingleVariableDeclaration()
         variableDeclaration.setName(
-          ast.newSimpleName(s"${className.head.toLower}")
+          ast.newSimpleName(s"$parameterName")
         )
         variableDeclaration.setType(
           ast.newSimpleType(ast.newSimpleName(className))
         )
 
-        addParameters(node, List(variableDeclaration))
-
-        modifiedMethods.addOne(
-          (typeDeclaration.getName.getIdentifier, node.getName.getIdentifier)
-        )
+        addParameter(node, variableDeclaration)
     }
 
     true
@@ -49,28 +39,42 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
   override def visit(node: MethodInvocation): Boolean = {
     // There are two types of invocations
     // 1. Invocations within the current class
-    // 2. Invocations from another scope
+    //    - We must use the class instance provided in the method arguments to call the method
+    //    to the method invocation
+    // 2. Invocations from other classes
+    //    - GoParser takes care of these cases, by adding the expression as the first argument to the method invocation
+    node.getParent match {
+      case parent: TypeDeclaration =>
+        // 1. Invocations within the current class
+        val parentClassName = parent.getName.getIdentifier
 
-    // Check if the method invocation corresponds to a modified method
-    if (modifiedMethods.contains(node.getName.getIdentifier)) {
-      val ast = node.getAST
-      val rewriter = ASTRewrite.create(ast)
+        val ast = node.getAST
+        val rewriter = ASTRewrite.create(ast)
 
-      // Create the new argument
-      val newArg = ast.newSimpleName("s")
+        // For the variable name, we always use the parent class's name in lowercase
+        // See the visit method for MethodDeclaration for more information
+        val variableName = parentClassName.toLowerCase()
 
-      // Use ListRewrite to add the new argument to the method invocation
-      val listRewrite =
-        rewriter.getListRewrite(node, MethodInvocation.ARGUMENTS_PROPERTY)
-      listRewrite.insertFirst(newArg, null)
+        // Create a new variable that creates the type of the class
+        val newArg = ast.newSimpleName(s"$variableName")
+
+        // Use ListRewrite to add the new argument to the method invocation
+        val listRewrite =
+          rewriter.getListRewrite(node, MethodInvocation.ARGUMENTS_PROPERTY)
+        listRewrite.insertFirst(newArg, null)
+
+        // Apply the changes to the document
+        val edits = rewriter.rewriteAST(document, null)
+        applyTransformation(edits)
+      case _ => ()
     }
 
     true
   }
 
-  private def addParameters(
+  private def addParameter(
       node: MethodDeclaration,
-      parameters: List[SingleVariableDeclaration]
+      parameter: SingleVariableDeclaration
   ): Unit = {
     val ast = node.getAST
     val rewriter = ASTRewrite.create(ast)
@@ -78,7 +82,7 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
     // Add the new parameters to the method declaration.
     val listRewrite =
       rewriter.getListRewrite(node, MethodDeclaration.PARAMETERS_PROPERTY)
-    parameters.foreach(p => listRewrite.insertFirst(p, null))
+    listRewrite.insertFirst(parameter, null)
     val edits = rewriter.rewriteAST(document, null)
 
     // Apply the changes to the document.

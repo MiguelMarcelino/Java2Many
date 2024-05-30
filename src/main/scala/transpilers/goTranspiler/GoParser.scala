@@ -252,7 +252,14 @@ class GoParser extends ASTParser {
       }
       .mkString(", ")
 
-    s"$name($arguments)"
+    // Expressions must be passed as an argument, as Go does not have classes.
+    // We therefore rely on dispatching to find the correct function.
+    node.getExpression match {
+      case n: Expression =>
+        val expression = visit(node.getExpression)
+        s"$name($expression, $arguments)"
+      case null => s"$name($arguments)"
+    }
   }
 
   override def visit(node: Modifier): String = {
@@ -443,7 +450,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: StringTemplateExpression): String = { "" }
 
-  override def visit(node: StringFragment): String = { "" }
+  override def visit(node: StringFragment): String = {
+    node.getEscapedValue
+  }
 
   override def visit(node: StringTemplateComponent): String = { "" }
 }

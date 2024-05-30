@@ -1,15 +1,14 @@
-import helpers.AstHelpers
+import base.helpers.AstHelpers
 import org.eclipse.jdt.core.dom.{AST, ASTParser}
 import org.eclipse.jface.text.Document
-import parsers.go.GoParser
-import transformers.ASTTransformerImpl
+import transpilers.goTranspiler.GoParser
 
 import java.io.File
 
 object Main {
 
   final def main(args: Array[String]) = {
-    println("Welcome to Scala2Go, a Scala to Go transpiler (obviously...)")
+    println("Welcome to Scala2Many, a Scala to many transpiler (obviously...)")
 
     val usage = """
       Usage: java2scala [--file file] [--projectDir dir]
@@ -58,7 +57,7 @@ object Main {
     Option.empty[Result.Value]
   }
 
-  def transpile(document: Document) = {
+  def transpile(document: Document): String = {
     val transformers = List(
       new ASTTransformerImpl(document)
     )
@@ -66,15 +65,18 @@ object Main {
     transformers.foreach(_.transform())
 
     // TODO: Move parser and JavaVersion to a separate class
-    val parser = ASTParser.newParser(AST.JLS8)
+    val parser = ASTParser.newParser(AST.JLS9)
     val astNode = AstHelpers.getRoot(parser, document)
 
-    // TODO: Parse the code using the parser specified in command line argument
-    println(astNode.getClass.getName)
-    val languageParser = new GoParser
-    val transpiledCode = languageParser.visit(astNode)
+    val ast = AstHelpers.getCompilationUnit(parser, document)
 
-    println(transpiledCode)
+    // Helper code to print AST
+    // println(AstHelpers.printAST(parser, document))
+    println("--------------")
+
+    // TODO: Parse the code using the parser that is linked to a specific command line argument (allow multiple languages)
+    val languageParser = new GoParser
+    languageParser.visit(astNode)
   }
 
   /** Testing code
@@ -83,8 +85,9 @@ object Main {
   private def testTranspile(): Unit = {
     // TODO: This is just test code. It should be removed when we start parsing code from files.
     val document = Document(
-      "import java.util.List;" + "\n" +
-        " class X {" + "\n" +
+      "package transpiled;" +
+        "import java.util.List;" + "\n" +
+        " class X(String animal) {" + "\n" +
         "  public void deleteme() { }" + "\n" +
         "}".stripMargin
     )

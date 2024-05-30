@@ -651,7 +651,12 @@ trait ASTParser {
     * @param node the node to visit
     * @return the resulting code as a string
     */
-  def visit(node: PrimitiveType): String
+  def visit(node: PrimitiveType): String = {
+    node.getPrimitiveTypeCode.toString match {
+      case t if typesMap.contains(t) => typesMap(t)
+      case t                         => t
+    }
+  }
 
   /** Visits the given type-specific AST node.
     *
@@ -850,8 +855,8 @@ trait ASTParser {
     */
   def visit(node: Type): String = {
     node.toString match {
-      case n if typesMap.contains(n) => typesMap(n.toString)
-      case _                         => node.toString
+      case n if typesMap.contains(n) => typesMap(n)
+      case n                         => n
     }
   }
 

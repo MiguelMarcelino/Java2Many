@@ -139,7 +139,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: ExpressionMethodReference): String = { "" }
 
-  override def visit(node: ExpressionStatement): String = { "" }
+  override def visit(node: ExpressionStatement): String = {
+    visit(node.getExpression)
+  }
 
   override def visit(node: FieldAccess): String = { "" }
 
@@ -238,9 +240,25 @@ class GoParser extends ASTParser {
        |}""".stripMargin
   }
 
-  override def visit(node: MethodInvocation): String = { "" }
+  override def visit(node: MethodInvocation): String = {
+    val name = visit(node.getName)
+    val arguments = node
+      .arguments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
-  override def visit(node: Modifier): String = { "" }
+    s"$name($arguments)"
+  }
+
+  override def visit(node: Modifier): String = {
+    // TODO: Revisit this method
+    node.getKeyword.toString
+  }
 
   override def visit(node: ModuleDeclaration): String = {
     val statements = node
@@ -290,8 +308,6 @@ class GoParser extends ASTParser {
 
   override def visit(node: ProvidesDirective): String = { "" }
 
-  override def visit(node: PrimitiveType): String = { "" }
-
   override def visit(node: QualifiedName): String = { "" }
 
   override def visit(node: QualifiedType): String = { "" }
@@ -304,7 +320,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: RecordPattern): String = { "" }
 
-  override def visit(node: ReturnStatement): String = { "" }
+  override def visit(node: ReturnStatement): String = {
+    s"return ${visit(node.getExpression)}"
+  }
 
   override def visit(node: SimpleName): String = {
     s"${node.getIdentifier}"
@@ -396,7 +414,20 @@ class GoParser extends ASTParser {
 
   override def visit(node: UsesDirective): String = { "" }
 
-  override def visit(node: VariableDeclarationExpression): String = { "" }
+  override def visit(node: VariableDeclarationExpression): String = {
+    val typeName = visit(node.getType)
+    val fragments = node
+      .fragments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"$fragments: $typeName"
+  }
 
   override def visit(node: VariableDeclarationStatement): String = { "" }
 

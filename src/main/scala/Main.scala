@@ -65,6 +65,13 @@ object Main {
     transpiler.transpile()
   }
 
+  def getDocument() = {
+    // Implement this method based on your context to return the current document
+    // For example:
+    // new Document(new String(Files.readAllBytes(Paths.get("path/to/your/java/file.java")), StandardCharsets.UTF_8))
+    None
+  }
+
   private def getTranspiler(
       language: String,
       document: Document
@@ -81,22 +88,25 @@ object Main {
     */
   private def testTranspile(): Unit = {
     // TODO: This is just test code. It should be removed when we start parsing code from files.
-    val document = Document(
-      "package transpiled;" +
-        "import java.util.List;" + "\n" +
-        "class X(Int something) {" + "\n" +
-        "   public void callMe(Int arg1) { println(arg1); }" + "\n" +
-        "   public void deleteMe() {" + "\n" +
-        "     callMe(1); " + "\n" +
-        "   }" + "\n" +
-        "}" + "\n" +
-        "class Y(String name) {" + "\n" +
-        "   public void testFunc(Int arg1) { " + "\n" +
-        "     X x = X(1);" + "\n" +
-        "     void d = x.callMe(2);" + "\n" +
-        "   }" + "\n" +
-        "}".stripMargin
-    )
+    val sourceCode =
+      """
+      public class MyClass {
+          private int field;
+
+          public MyClass(int field) {
+              this.field = field;
+          }
+
+          public void setField(int field) {
+              this.field = field;
+          }
+
+          public int getField() {
+              return field;
+          }
+      }
+      """
+    val document = Document(sourceCode.stripMargin)
 
     val transpiledCode = transpileDocument(document)
 

@@ -87,11 +87,14 @@ class GoParser extends ASTParser {
     //      {ImportDeclaration}
     //           ModuleDeclaration
 
-    val isOrdinaryCompilationUnit = node.getPackage != null
+    val isOrdinaryCompilationUnit = node.getModule == null
 
     isOrdinaryCompilationUnit match {
       case true => // It is an OrdinaryCompilationUnit
-        val pkg = visit(node.getPackage)
+        val pkg = node.getPackage == null match {
+          case false => visit(node.getPackage)
+          case true  => ""
+        }
 
         val body = node
           .types()
@@ -436,7 +439,20 @@ class GoParser extends ASTParser {
     s"$fragments: $typeName"
   }
 
-  override def visit(node: VariableDeclarationStatement): String = { "" }
+  override def visit(node: VariableDeclarationStatement): String = {
+    val typeName = visit(node.getType)
+    val fragments = node
+      .fragments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"$fragments: $typeName"
+  }
 
   override def visit(node: VariableDeclarationFragment): String = {
     s"${node.getName.getIdentifier}"

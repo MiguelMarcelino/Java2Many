@@ -15,45 +15,7 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
   override def visit(node: MethodDeclaration): Boolean = {
     // Add a new argument to each method to allow dispatching on the class.
     node.getParent match {
-      case typeDeclaration: TypeDeclaration if node.isConstructor =>
-        // If the method is a constructor, we do not need to add the class name as a parameter
-        // Instead, we need to return a new instance of the object
-        val className = typeDeclaration.getName.getIdentifier
-        val ast = node.getAST
-        val rewriter = ASTRewrite.create(ast)
-
-        // Create a new instance of the class to return in the constructor
-        val methodInvocation = ast.newMethodInvocation()
-        methodInvocation.setName(ast.newSimpleName(className))
-        val argumentRewrite =
-          rewriter.getListRewrite(
-            methodInvocation,
-            MethodInvocation.ARGUMENTS_PROPERTY
-          )
-        typeDeclaration.getFields.foreach { field =>
-          val fieldName = field
-            .fragments()
-            .get(0)
-            .asInstanceOf[VariableDeclarationFragment]
-            .getName
-            .getIdentifier
-          val fieldType = field.getType.toString
-          argumentRewrite.insertLast(ast.newSimpleName(fieldName), null)
-        }
-
-        // Create return statement that returns an instance of the class
-        val returnStatement = ast.newReturnStatement()
-        returnStatement.setExpression(methodInvocation)
-
-        val block = node.getBody
-        val listRewrite =
-          rewriter.getListRewrite(block, Block.STATEMENTS_PROPERTY)
-        listRewrite.insertLast(returnStatement, null)
-
-        val edit = rewriter.rewriteAST(document, null)
-        applyTransformation(edit)
-
-      case typeDeclaration: TypeDeclaration =>
+      case typeDeclaration: TypeDeclaration if !node.isConstructor =>
         // If the node is not a constructor, we need to add the class name as a parameter
         val ast = node.getAST
         val rewriter = ASTRewrite.create(ast)
@@ -78,6 +40,7 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
         // Apply the changes to the document.
         val edit = rewriter.rewriteAST(document, null)
         applyTransformation(edit)
+
       case _ => // Do nothing if it's not a TypeDeclaration
     }
 

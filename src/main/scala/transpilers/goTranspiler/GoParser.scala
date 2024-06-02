@@ -238,9 +238,27 @@ class GoParser extends ASTParser {
 
     val nodeBody = visit(node.getBody)
 
-    s"""func $parsedFuncName ($parameters) {
-       |  $nodeBody
-       |}""".stripMargin
+    node.isConstructor match {
+      case true =>
+        // TODO: Investigate bug. For some reason, doing this on the GoClassRewriter inserts a
+        //  TypeDeclaration on the class level
+        val parentName = node.getParent match {
+          case p: TypeDeclaration => p.getName.getIdentifier
+          case _                  => "EMPTY_PARENT"
+        }
+        val parameterNames = node.parameters().toArray.map {
+          case parameter: SingleVariableDeclaration =>
+            parameter.getName.getIdentifier
+        }
+        s"""func $parsedFuncName ($parameters) {
+           |  return $parentName(${parameterNames.mkString(", ")})
+           |}""".stripMargin
+      case _ =>
+        s"""func $parsedFuncName ($parameters) {
+           |  $nodeBody
+           |}""".stripMargin
+    }
+
   }
 
   override def visit(node: MethodInvocation): String = {

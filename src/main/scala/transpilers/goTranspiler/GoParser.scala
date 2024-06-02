@@ -246,12 +246,23 @@ class GoParser extends ASTParser {
           case p: TypeDeclaration => p.getName.getIdentifier
           case _                  => "EMPTY_PARENT"
         }
-        val parameterNames = node.parameters().toArray.map {
-          case parameter: SingleVariableDeclaration =>
-            parameter.getName.getIdentifier
+        // Find all assignments to class variables and use them when creating an instance of the class
+        // in the constructor
+        val thisAssignments = node.getBody.statements().toArray().collect {
+          case exprStmt: ExpressionStatement =>
+            exprStmt.getExpression match {
+              case assignment: Assignment =>
+                assignment.getLeftHandSide match {
+                  case fieldAccess: FieldAccess
+                      if fieldAccess.getExpression
+                        .isInstanceOf[ThisExpression] =>
+                    val assignmentVal = assignment.getRightHandSide.toString
+                    s"${fieldAccess.getName.getIdentifier} = $assignmentVal"
+                }
+            }
         }
         s"""func $parsedFuncName ($parameters) {
-           |  return $parentName(${parameterNames.mkString(", ")})
+           |  return $parentName(${thisAssignments.mkString(", ")})
            |}""".stripMargin
       case _ =>
         s"""func $parsedFuncName ($parameters) {

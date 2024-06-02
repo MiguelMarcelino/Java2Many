@@ -7,6 +7,12 @@ import org.eclipse.text.edits.{TextEdit, UndoEdit}
 
 import scala.collection.mutable.ListBuffer
 
+/** Encapsulates the objects needed to perform a rewrite on the AST
+  * Contains generic methods to add and replace nodes in the AST. More specific transformations must be implemented
+  * as extensions to this class.
+  * @param rewriter the ASTRewrite object
+  * @param listRewrite the ListRewrite object
+  */
 abstract class ASTTransformer(document: Document) extends ASTVisitor {
 
   private final val astEdits: ListBuffer[UndoEdit] = ListBuffer.empty[UndoEdit]
@@ -60,7 +66,7 @@ abstract class ASTTransformer(document: Document) extends ASTVisitor {
     * @param edit the edit to apply
     * @return the `UndoEdit` object encapsulating the reverse changes of the edit
     */
-  private def applyTransformation(edit: TextEdit): UndoEdit = {
+  protected def applyTransformation(edit: TextEdit): UndoEdit = {
     val undoEdit = edit.apply(document)
 
     // Keep track of all reverse changes of all the edits, to allow reverting them if necessary

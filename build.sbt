@@ -1,6 +1,6 @@
 ThisBuild / scalaVersion := "3.3.0"
 
-name := "Scala2Many"
+name := "Java2Many"
 organization := "ch.epfl.scala"
 version := "0.1"
 

@@ -1,5 +1,5 @@
-# Scala2Many
-A Scala to many Transpiler
+# Java2Many
+A Java to many Transpiler
 
 ## Requirements
 - Java 17

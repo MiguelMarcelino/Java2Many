@@ -71,8 +71,8 @@ class GoParser extends ASTParser {
       .imports()
       .toArray()
       .map {
-        case node: ImportDeclaration =>
-          visit(node)
+        case n: ImportDeclaration =>
+          visit(n)
         case _ => ""
       }
       .mkString("\n")
@@ -87,18 +87,21 @@ class GoParser extends ASTParser {
     //      {ImportDeclaration}
     //           ModuleDeclaration
 
-    val isOrdinaryCompilationUnit = node.getPackage != null
+    val isOrdinaryCompilationUnit = node.getModule == null
 
     isOrdinaryCompilationUnit match {
       case true => // It is an OrdinaryCompilationUnit
-        val pkg = visit(node.getPackage)
+        val pkg = node.getPackage == null match {
+          case false => visit(node.getPackage)
+          case true  => ""
+        }
 
         val body = node
           .types()
           .toArray()
           .map {
-            case node: ASTNode =>
-              visit(node)
+            case n: ASTNode =>
+              visit(n)
             case _ => ""
           }
           .mkString("\n")
@@ -139,7 +142,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: ExpressionMethodReference): String = { "" }
 
-  override def visit(node: ExpressionStatement): String = { "" }
+  override def visit(node: ExpressionStatement): String = {
+    visit(node.getExpression)
+  }
 
   override def visit(node: FieldAccess): String = { "" }
 
@@ -208,7 +213,15 @@ class GoParser extends ASTParser {
   override def visit(node: MethodRefParameter): String = { "" }
 
   override def visit(node: MethodDeclaration): String = {
-    val parameters = node.parameters()
+    val parameters = node
+      .parameters()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
     val isPrivate = node.modifiers().toArray().exists {
       case modifier: Modifier =>
@@ -225,14 +238,66 @@ class GoParser extends ASTParser {
 
     val nodeBody = visit(node.getBody)
 
-    s"""func $parsedFuncName () {
-       |  $nodeBody
-       |}""".stripMargin
+    node.isConstructor match {
+      case true =>
+        // TODO: Investigate bug. For some reason, doing this on the GoClassRewriter inserts a
+        //  TypeDeclaration on the class level
+        val parentName = node.getParent match {
+          case p: TypeDeclaration => p.getName.getIdentifier
+          case _                  => "EMPTY_PARENT"
+        }
+        // Find all assignments to class variables and use them when creating an instance of the class
+        // in the constructor
+        val thisAssignments = node.getBody.statements().toArray().collect {
+          case exprStmt: ExpressionStatement =>
+            exprStmt.getExpression match {
+              case assignment: Assignment =>
+                assignment.getLeftHandSide match {
+                  case fieldAccess: FieldAccess
+                      if fieldAccess.getExpression
+                        .isInstanceOf[ThisExpression] =>
+                    val assignmentVal = assignment.getRightHandSide.toString
+                    s"${fieldAccess.getName.getIdentifier} = $assignmentVal"
+                }
+            }
+        }
+        s"""func $parsedFuncName ($parameters) {
+           |  return $parentName(${thisAssignments.mkString(", ")})
+           |}""".stripMargin
+      case _ =>
+        s"""func $parsedFuncName ($parameters) {
+           |  $nodeBody
+           |}""".stripMargin
+    }
+
   }
 
-  override def visit(node: MethodInvocation): String = { "" }
+  override def visit(node: MethodInvocation): String = {
+    val name = visit(node.getName)
+    val arguments = node
+      .arguments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
-  override def visit(node: Modifier): String = { "" }
+    // Expressions must be passed as an argument, as Go does not have classes.
+    // We therefore rely on dispatching to find the correct function.
+    node.getExpression match {
+      case n: Expression =>
+        val expression = visit(node.getExpression)
+        s"$name($expression, $arguments)"
+      case null => s"$name($arguments)"
+    }
+  }
+
+  override def visit(node: Modifier): String = {
+    // TODO: Revisit this method
+    node.getKeyword.toString
+  }
 
   override def visit(node: ModuleDeclaration): String = {
     val statements = node
@@ -282,8 +347,6 @@ class GoParser extends ASTParser {
 
   override def visit(node: ProvidesDirective): String = { "" }
 
-  override def visit(node: PrimitiveType): String = { "" }
-
   override def visit(node: QualifiedName): String = { "" }
 
   override def visit(node: QualifiedType): String = { "" }
@@ -296,7 +359,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: RecordPattern): String = { "" }
 
-  override def visit(node: ReturnStatement): String = { "" }
+  override def visit(node: ReturnStatement): String = {
+    s"return ${visit(node.getExpression)}"
+  }
 
   override def visit(node: SimpleName): String = {
     s"${node.getIdentifier}"
@@ -308,7 +373,11 @@ class GoParser extends ASTParser {
 
   override def visit(node: SingleMemberAnnotation): String = { "" }
 
-  override def visit(node: SingleVariableDeclaration): String = { "" }
+  override def visit(node: SingleVariableDeclaration): String = {
+    val typeName = visit(node.getType)
+    val name = visit(node.getName)
+    s"$name $typeName"
+  }
 
   override def visit(node: StringLiteral): String = { "" }
 
@@ -346,7 +415,7 @@ class GoParser extends ASTParser {
     val fields = node.getFields.map(node => visit(node)).mkString("\n")
     val methods = node.getMethods.map(node => visit(node)).mkString("\n")
 
-    s"""struct ${node.getName} {
+    s"""type ${node.getName} struct {
        |  $fields
        |}
        |
@@ -384,9 +453,35 @@ class GoParser extends ASTParser {
 
   override def visit(node: UsesDirective): String = { "" }
 
-  override def visit(node: VariableDeclarationExpression): String = { "" }
+  override def visit(node: VariableDeclarationExpression): String = {
+    val typeName = visit(node.getType)
+    val fragments = node
+      .fragments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
-  override def visit(node: VariableDeclarationStatement): String = { "" }
+    s"$fragments: $typeName"
+  }
+
+  override def visit(node: VariableDeclarationStatement): String = {
+    val typeName = visit(node.getType)
+    val fragments = node
+      .fragments()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"$fragments: $typeName"
+  }
 
   override def visit(node: VariableDeclarationFragment): String = {
     s"${node.getName.getIdentifier}"
@@ -400,7 +495,9 @@ class GoParser extends ASTParser {
 
   override def visit(node: StringTemplateExpression): String = { "" }
 
-  override def visit(node: StringFragment): String = { "" }
+  override def visit(node: StringFragment): String = {
+    node.getEscapedValue
+  }
 
   override def visit(node: StringTemplateComponent): String = { "" }
 }

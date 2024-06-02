@@ -1,14 +1,15 @@
+import base.Transpiler
 import base.helpers.AstHelpers
 import org.eclipse.jdt.core.dom.{AST, ASTParser}
 import org.eclipse.jface.text.Document
-import transpilers.goTranspiler.GoParser
+import transpilers.goTranspiler.{GoParser, GoTranspiler}
 
 import java.io.File
 
 object Main {
 
   final def main(args: Array[String]) = {
-    println("Welcome to Scala2Many, a Scala to many transpiler (obviously...)")
+    println("Welcome to Java2Many, a Java to many transpiler (obviously...)")
 
     val usage = """
       Usage: java2scala [--file file] [--projectDir dir]
@@ -57,26 +58,29 @@ object Main {
     Option.empty[Result.Value]
   }
 
-  def transpile(document: Document): String = {
-    val transformers = List(
-      new ASTTransformerImpl(document)
-    )
+  private def transpileDocument(document: Document): String = {
+    // TODO: The String should be parsed from command line args
+    val transpiler = getTranspiler("go", document)
 
-    transformers.foreach(_.transform())
+    transpiler.transpile()
+  }
 
-    // TODO: Move parser and JavaVersion to a separate class
-    val parser = ASTParser.newParser(AST.JLS9)
-    val astNode = AstHelpers.getRoot(parser, document)
+  def getDocument() = {
+    // Implement this method based on your context to return the current document
+    // For example:
+    // new Document(new String(Files.readAllBytes(Paths.get("path/to/your/java/file.java")), StandardCharsets.UTF_8))
+    None
+  }
 
-    val ast = AstHelpers.getCompilationUnit(parser, document)
-
-    // Helper code to print AST
-    // println(AstHelpers.printAST(parser, document))
-    println("--------------")
-
-    // TODO: Parse the code using the parser that is linked to a specific command line argument (allow multiple languages)
-    val languageParser = new GoParser
-    languageParser.visit(astNode)
+  private def getTranspiler(
+      language: String,
+      document: Document
+  ): Transpiler = {
+    language match {
+      case "go" => GoTranspiler(document)
+      case _ =>
+        throw new IllegalArgumentException(s"Unsupported language: $language")
+    }
   }
 
   /** Testing code
@@ -84,15 +88,27 @@ object Main {
     */
   private def testTranspile(): Unit = {
     // TODO: This is just test code. It should be removed when we start parsing code from files.
-    val document = Document(
-      "package transpiled;" +
-        "import java.util.List;" + "\n" +
-        " class X(String animal) {" + "\n" +
-        "  public void deleteme() { }" + "\n" +
-        "}".stripMargin
-    )
+    val sourceCode =
+      """
+      public class MyClass {
+          private int field;
 
-    val transpiledCode = transpile(document)
+          public MyClass(int field) {
+              this.field = field;
+          }
+
+          public void setField(int field) {
+              this.field = field;
+          }
+
+          public int getField() {
+              return field;
+          }
+      }
+      """
+    val document = Document(sourceCode.stripMargin)
+
+    val transpiledCode = transpileDocument(document)
 
     println(transpiledCode)
   }

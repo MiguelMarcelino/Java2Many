@@ -88,25 +88,42 @@ object Main {
     */
   private def testTranspile(): Unit = {
     // TODO: This is just test code. It should be removed when we start parsing code from files.
-    val sourceCode =
+//    val sourceCode =
+//      """
+//      public class MyClass {
+//          private int field;
+//
+//          public MyClass(int field) {
+//              this.field = field;
+//          }
+//
+//          public void setField(int field) {
+//              this.field = field;
+//          }
+//
+//          public int getField() {
+//              return field;
+//          }
+//      }
+//      """
+
+    val sourceCode2 =
       """
-      public class MyClass {
-          private int field;
-
-          public MyClass(int field) {
-              this.field = field;
-          }
-
-          public void setField(int field) {
-              this.field = field;
-          }
-
-          public int getField() {
-              return field;
-          }
-      }
-      """
-    val document = Document(sourceCode.stripMargin)
+        public class MyClass {
+            public boolean testIfStatement() {
+                int x = 10;
+                if (x > 5) {
+                    System.out.println("x is greater than 5");
+                } else if (x == 5) {
+                    System.out.println("x is equal to 5");
+                } else {
+                    System.out.println("x is less than 5");
+                }
+                return;
+            }
+        }
+        """
+    val document = Document(sourceCode2.stripMargin)
 
     val transpiledCode = transpileDocument(document)
 

@@ -1,6 +1,9 @@
 package base
 
 import org.eclipse.jdt.core.dom.*
+import org.eclipse.jdt.internal.compiler.ast.CaseStatement
+
+import scala.collection.mutable.ArrayBuffer
 
 /** Defines the methods that must be implemented by any parser that
   * wants to convert a Java AST to a specific target language.
@@ -141,7 +144,31 @@ trait ASTParser {
   /** The map of types to their specific types in the target language.
     * Every parser must define their own map.
     */
-  val typesMap: Map[String, String]
+  protected val typesMap: Map[String, String]
+
+  /** The map of calls to their specific calls in the target language.
+    * Every parser must define their own map.
+    */
+  protected val callsMap: Map[String, String]
+
+  /** A list of imports to be added to the target language code.
+    */
+  protected val importsList: ArrayBuffer[String] = ArrayBuffer()
+
+  protected def getImports(node: CompilationUnit) = {
+    val imports = node
+      .imports()
+      .toArray()
+      .map {
+        case n: ImportDeclaration =>
+          visit(n)
+        case _ => ""
+      }
+    val totalImports = importsList ++ imports
+
+    totalImports.mkString("\n")
+
+  }
 
   /** Visits the given type-specific AST node.
     *

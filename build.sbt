@@ -6,5 +6,6 @@ version := "0.1"
 
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-parser-combinators" % "2.4.0",
-  "org.eclipse.jdt" % "org.eclipse.jdt.core" % "3.37.0"
+  "org.eclipse.jdt" % "org.eclipse.jdt.core" % "3.37.0",
+  "org.scalatest" %% "scalatest" % "3.2.18" % Test
 )

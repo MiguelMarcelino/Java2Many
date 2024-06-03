@@ -8,6 +8,7 @@ class GoTranspiler(document: Document) extends Transpiler(document) {
   override val transpilerOptions: TranspilerOptions = TranspilerOptions(
     transformers = Seq(GoClassRewriter(document)),
     optimizers = Seq(),
-    parser = GoParser()
+    parser = GoParser(),
+    formatter = GoFormatter()
   )
 }

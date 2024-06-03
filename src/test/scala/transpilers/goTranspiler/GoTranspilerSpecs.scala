@@ -9,7 +9,7 @@ class GoTranspilerSpecs extends AnyWordSpec {
   def transpileCode(codeAsString: String): String = {
     val document = Document(codeAsString.stripMargin)
     val transpiler = new GoTranspiler(document)
-    transpiler.transpile()
+    transpiler.transpileCode()
   }
 
   "goTranspiler" should {

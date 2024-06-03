@@ -11,7 +11,7 @@ trait Transpiler(document: Document) {
   // TODO: Read from conf
   val parser = ASTParser.newParser(AST.JLS9)
 
-  def transpile(): String = {
+  def transpileCode(): String = {
     // Apply language specific transformers
     val transformers = transpilerOptions.transformers
     transformers.foreach(_.transform())

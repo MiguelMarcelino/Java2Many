@@ -2,19 +2,19 @@ package base
 
 import exceptions.FormatException
 
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 trait Formatter {
 
   val command: Seq[String]
 
-  def formatCode(file: File): Unit = {
+  def formatCode(filePath: Path): Unit = {
     // Run the command command
     val processBuilder = ProcessBuilder()
 
     // Set the command to run
-    val commandWithFile = s"${command.mkString(" ")} ${file.getAbsolutePath}"
+    val commandWithFile = s"${command.mkString(" ")} ${filePath.getFileName}"
     processBuilder.command(commandWithFile)
 
     // Start the process

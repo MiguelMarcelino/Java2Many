@@ -1,10 +1,5 @@
-import base.{FileTranspiler, Transpiler}
-import org.eclipse.jface.text.Document
-import transpilers.goTranspiler.GoTranspiler
+import base.FileTranspiler
 
-import java.io.File
-import java.nio.charset.Charset
-import java.nio.file.Files
 import scala.collection.mutable
 
 object Main {

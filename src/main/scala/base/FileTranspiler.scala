@@ -9,32 +9,51 @@ import java.nio.file.Files
 
 class FileTranspiler {
 
-  def transpile(options: Map[String, String]): Unit = {
-    val fileLocation = options.get("file")
-    val dirLocation = options.get("dir")
+  /** Transpiles a file or a directory from Java to Scala
+    *
+    * @param options the options to use when transpiling
+    *                - file: the location of the file to transpile
+    *                - dir: the location of the directory to transpile
+    *                - targetDir: the location of the directory to put the transpiled files
+    *                - language: the language of the source code
+    * @return the transpiled file or directory
+    */
+  def transpile(options: Map[String, String]): File = {
+    val fileLocation = options.get("file").map(File(_))
+    val dirLocation = options.get("dir").map(File(_))
+    val targetDir = options.get("targetDir").map(File(_))
 
-    val result = (fileLocation, dirLocation) match {
+    (fileLocation, dirLocation) match {
       case (Some(_), Some(_)) =>
         throw new IllegalArgumentException(
           "Cannot transpile both a file and a directory at the same time"
         )
-      case (Some(filePath), None) =>
-        val file = new File(filePath)
-        transpileFile(file, options)
-      case (None, Some(dirPath)) =>
-        val dir = new File(dirPath)
-        transpileDir(dir, options)
+      case (Some(file), None) =>
+        transpileFile(file, targetDir, options)
+      case (None, Some(dir)) =>
+        transpileDir(
+          projectDirLocation = dir,
+          targetDir = targetDir,
+          commandLineOptions = options,
+          isChildDir = false
+        )
+      case _ =>
+        throw new IllegalArgumentException(
+          "Please provide either a file or a directory to transpile"
+        )
     }
   }
 
   /** Transpiles a single file from Java to Scala
     *
     * @param fileLocation - the location of the file to transpile
+    * @return the transpiled file
     */
   def transpileFile(
       fileLocation: File,
+      targetDir: Option[File],
       commandLineOptions: Map[String, String]
-  ): Unit = {
+  ): File = {
     // Parse command line options
     val languageName = commandLineOptions.get("language")
 
@@ -46,36 +65,64 @@ class FileTranspiler {
     val document = new Document(sourceCode)
 
     val transpiler = getTranspiler(languageName, document)
-
     val transpiledCode = transpiler.transpileCode()
 
     // Write transpiled code to file
-    val transpiledFile =
-      Files.writeString(fileLocation.toPath, transpiledCode)
+    val transpiledFile = targetDir match {
+      case Some(target) =>
+        val targetFile = new File(target, fileLocation.getName)
+        targetFile.mkdirs()
+        Files.writeString(targetFile.toPath, transpiledCode)
+      case None =>
+        Files.writeString(fileLocation.toPath, transpiledCode)
+    }
 
     // Format code
     transpiler.transpilerOptions.formatter.formatCode(transpiledFile)
+
+    transpiledFile.toFile
   }
 
   /** Transpiles a project directory from Java to Scala
     *
-    * @param dirLocation - The location of the projectDirectory to transpile
+    * @param projectDirLocation - the location of the project directory to transpile
+    * @param targetDir - the location of the directory to put the transpiled files
+    * @param commandLineOptions - the options to use when transpiling
+    * @param isChildDir - whether the directory is a child directory
     */
   def transpileDir(
       projectDirLocation: File,
-      commandLineOptions: Map[String, String]
-  ): Unit = {
+      targetDir: Option[File],
+      commandLineOptions: Map[String, String],
+      isChildDir: Boolean
+  ): File = {
     val files = projectDirLocation.listFiles().toSeq
+
+    val target = (targetDir, isChildDir) match {
+      case (Some(t), _)  => t
+      case (None, true)  => projectDirLocation
+      case (None, false) =>
+        // We want to put all the files in a new directory with the suffix '_transpiled'
+        // to not have all files in the same folder
+        new File(
+          projectDirLocation.getParentFile,
+          s"${projectDirLocation.getName}_transpiled"
+        )
+    }
 
     files.map {
       case file if file.isDirectory =>
-        transpileDir(file, commandLineOptions)
+        transpileDir(file, Some(target), commandLineOptions, isChildDir = true)
       case file if file.isFile =>
-        transpileFile(file, commandLineOptions)
+        transpileFile(
+          file,
+          Some(target),
+          commandLineOptions
+        )
       case _ => None
     }
 
-    ()
+    target
   }
 
   private def getTranspiler(

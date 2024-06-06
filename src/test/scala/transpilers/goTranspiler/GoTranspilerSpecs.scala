@@ -1,6 +1,5 @@
 package transpilers.goTranspiler
 
-import org.eclipse.jdt.core.dom.{ASTNode, MethodDeclaration}
 import org.eclipse.jface.text.Document
 import org.scalatest.wordspec.AnyWordSpec
 

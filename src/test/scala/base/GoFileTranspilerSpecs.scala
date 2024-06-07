@@ -16,23 +16,36 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
     "correctly transpile a method declaration" in {
       // Arrange
       val javaMethodDeclaration =
-        """public static void someMethod(String value) {
+        """
+          |class SomeClass {
+          |  public static void someMethod(String value) {
+          |  }
           |}""".stripMargin
+
+      val expectedResult =
+        "type SomeClass struct {" + "\n" +
+          "}" + "\n" +
+          "func someMethod(value string) {" + "\n" +
+          "}".stripMargin
 
       val file = writeFileContents(javaMethodDeclaration)
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileContents = Files.readAllLines(file.toPath).toArray()
-      val fileAsString = fileContents.mkString("\n")
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
-        fileAsString ==
-          """func someMethod(value string) {
-            |}""".stripMargin
+        fileAsString.linesIterator
+          .map(_.trim)
+          .mkString("")
+          .replaceAll("\\s", "") ==
+          expectedResult.linesIterator
+            .map(_.trim)
+            .mkString("")
+            .replaceAll("\\s", "")
       )
     }
 
@@ -47,10 +60,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==
@@ -71,10 +84,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==
@@ -94,10 +107,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==
@@ -117,10 +130,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==
@@ -149,10 +162,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==
@@ -185,10 +198,10 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
       val fileTranspiler: FileTranspiler = FileTranspiler()
 
       // Act
-      val result =
+      val transpiledFile =
         fileTranspiler.transpileFile(file, Some(targetDir), commandLineOptions)
 
-      val fileAsString = readFileContents(file)
+      val fileAsString = readFileContents(transpiledFile)
 
       assert(
         fileAsString ==

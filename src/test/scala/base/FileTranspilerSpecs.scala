@@ -11,13 +11,14 @@ class FileTranspilerSpecs extends AnyWordSpec {
     Map("language" -> "go", "file" -> "temp.java", "targetDir" -> "temp")
 
   "transpile" should {
-    "return the correct method declaration" in {
+    "correctly transpile a method declaration" in {
       // Arrange
       val javaMethodDeclaration =
         """public static void someMethod(String value) {
           |}""".stripMargin
       // Create a temporary file to write the contents to
       val file: File = Files.createTempFile("temp", ".java").toFile
+      Files.write(file.toPath, javaMethodDeclaration.getBytes())
 
       val fileTranspiler: FileTranspiler = FileTranspiler()
       val targetDir: File = Files.createTempDirectory("temp").toFile

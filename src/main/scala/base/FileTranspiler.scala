@@ -1,11 +1,12 @@
 package base
 
+import exceptions.FileCreationException
 import org.eclipse.jface.text.Document
 import transpilers.goTranspiler.GoTranspiler
 
 import java.io.File
 import java.nio.charset.Charset
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 
 class FileTranspiler {
 
@@ -67,20 +68,55 @@ class FileTranspiler {
     val transpiler = getTranspiler(languageName, document)
     val transpiledCode = transpiler.transpileCode()
 
+    // Get the name for the new file
+    val languageExtension = transpiler.transpilerOptions.extension
+    val existingFileName = fileLocation.getName
+      .split('.')
+      .headOption
+    val newFileName = existingFileName.headOption match {
+      case Some(name) => s"$name.$languageExtension"
+      case None       => s"transpiled.$languageExtension"
+    }
+
     // Write transpiled code to file
     val transpiledFile = targetDir match {
       case Some(target) =>
-        val targetFile = new File(target, fileLocation.getName)
-        targetFile.mkdirs()
-        Files.writeString(targetFile.toPath, transpiledCode)
+        val targetFile = new File(target, newFileName)
+        if (!target.exists()) {
+          target.mkdirs()
+        }
+
+        println("=============")
+        println(targetFile)
+        println(targetFile.toPath)
+        println("=============")
+
+        writeToFile(targetFile, transpiledCode)
       case None =>
-        Files.writeString(fileLocation.toPath, transpiledCode)
+        val parent = fileLocation.getParentFile.getPath
+        val targetFile = new File(parent, newFileName)
+        writeToFile(targetFile, transpiledCode)
     }
 
     // Format code
     transpiler.transpilerOptions.formatter.formatCode(transpiledFile)
 
     transpiledFile.toFile
+  }
+
+  private def writeToFile(
+      targetFile: File,
+      content: String
+  ): Path = {
+    targetFile.exists() match {
+      case true =>
+        // If the file already exists, we want to overwrite its current content
+        Files.writeString(targetFile.toPath, content)
+      case false =>
+        // If the file does not exist, we want to create a new file and write the content to it
+        targetFile.createNewFile()
+        Files.writeString(targetFile.toPath, content)
+    }
   }
 
   /** Transpiles a project directory from Java to Scala

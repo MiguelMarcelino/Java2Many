@@ -4,6 +4,7 @@ import exceptions.FormatException
 
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import scala.util.{Failure, Try}
 
 trait Formatter {
 
@@ -21,13 +22,14 @@ trait Formatter {
     val process = processBuilder.start()
 
     // Wait for the process to finish. I do this synchronously for now, but it might change in the future
-    try {
-      process.waitFor(30L, TimeUnit.SECONDS)
-    } catch {
-      case e: InterruptedException =>
-        throw FormatException("Timed out while formatting the Go file")
-      case e: NullPointerException =>
+    Try {
+      process.waitFor(30, TimeUnit.SECONDS)
+    } match {
+      case Failure(_: InterruptedException) =>
+        throw FormatException("Failed to format the Go file")
+      case Failure(_: NullPointerException) =>
         throw FormatException("Wrong timeunit was used")
+      case _ => ()
     }
 
     // Check if the process failed

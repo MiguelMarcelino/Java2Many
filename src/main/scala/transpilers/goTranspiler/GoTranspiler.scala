@@ -9,6 +9,7 @@ class GoTranspiler(document: Document) extends Transpiler(document) {
     transformers = Seq(GoClassRewriter(document)),
     optimizers = Seq(),
     parser = GoParser(),
-    formatter = GoFormatter()
+    formatter = GoFormatter(),
+    extension = "go"
   )
 }

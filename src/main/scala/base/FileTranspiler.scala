@@ -1,6 +1,5 @@
 package base
 
-import exceptions.FileCreationException
 import org.eclipse.jface.text.Document
 import transpilers.goTranspiler.GoTranspiler
 
@@ -85,15 +84,9 @@ class FileTranspiler {
         if (!target.exists()) {
           target.mkdirs()
         }
-
-        println("=============")
-        println(targetFile)
-        println(targetFile.toPath)
-        println("=============")
-
         writeToFile(targetFile, transpiledCode)
       case None =>
-        val parent = fileLocation.getParentFile.getPath
+        val parent = fileLocation.getParent
         val targetFile = new File(parent, newFileName)
         writeToFile(targetFile, transpiledCode)
     }

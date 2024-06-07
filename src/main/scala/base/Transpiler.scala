@@ -21,8 +21,8 @@ trait Transpiler(document: Document) {
     optimizers.foreach(_.transform())
 
     // Helper code to print AST
-    println(AstHelpers.printAST(parser, document))
-    println("--------------")
+    // println(AstHelpers.printAST(parser, document))
+    // println("--------------")
 
     // Parse the AST with a language-specific parser
     val astNode = AstHelpers.getRoot(parser, document)

@@ -92,7 +92,11 @@ class FileTranspiler {
     }
 
     // Format code
-    transpiler.transpilerOptions.formatter.formatCode(transpiledFile)
+    transpiler.transpilerOptions.formatter match {
+      case Some(formatter) =>
+        formatter.formatCode(transpiledFile)
+      case None => ()
+    }
 
     transpiledFile.toFile
   }

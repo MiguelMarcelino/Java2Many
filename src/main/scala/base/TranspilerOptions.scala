@@ -4,6 +4,6 @@ case class TranspilerOptions(
     transformers: Seq[ASTTransformer],
     optimizers: Seq[ASTTransformer],
     parser: ASTParser,
-    formatter: Formatter,
+    formatter: Option[Formatter],
     extension: String
 )

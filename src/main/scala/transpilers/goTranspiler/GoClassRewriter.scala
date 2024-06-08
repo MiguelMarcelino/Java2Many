@@ -20,10 +20,10 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
         val ast = node.getAST
         val rewriter = ASTRewrite.create(ast)
 
-        val className = typeDeclaration.getName.getIdentifier
+        // The parameter name is the class name in camel-case
+        val className: String = typeDeclaration.getName.getIdentifier
+        val parameterName = className.head.toLower +: className.tail
 
-        // The parameter name is the class name in lowercase
-        val parameterName = className.toLowerCase()
         val variableDeclaration = ast.newSingleVariableDeclaration()
         variableDeclaration.setName(
           ast.newSimpleName(s"$parameterName")
@@ -62,9 +62,9 @@ class GoClassRewriter(document: Document) extends ASTTransformer(document) {
         val ast = node.getAST
         val rewriter = ASTRewrite.create(ast)
 
-        // For the variable name, we always use the parent class's name in lowercase
+        // For the variable name, we always use the parent class's name in camel-case
         // See the visit method for MethodDeclaration for more information
-        val variableName = parentClassName.toLowerCase()
+        val variableName = parentClassName.head.toLower +: parentClassName.tail
 
         // Create a new variable that creates the type of the class
         val newArg = ast.newSimpleName(s"$variableName")

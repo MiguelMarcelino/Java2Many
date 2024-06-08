@@ -11,7 +11,7 @@ trait Transpiler(document: Document) {
   // TODO: Read from conf
   val parser = ASTParser.newParser(AST.JLS9)
 
-  def transpile(): String = {
+  def transpileCode(): String = {
     // Apply language specific transformers
     val transformers = transpilerOptions.transformers
     transformers.foreach(_.transform())
@@ -21,8 +21,8 @@ trait Transpiler(document: Document) {
     optimizers.foreach(_.transform())
 
     // Helper code to print AST
-    println(AstHelpers.printAST(parser, document))
-    println("--------------")
+    // println(AstHelpers.printAST(parser, document))
+    // println("--------------")
 
     // Parse the AST with a language-specific parser
     val astNode = AstHelpers.getRoot(parser, document)

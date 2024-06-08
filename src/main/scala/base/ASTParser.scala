@@ -1,7 +1,6 @@
 package base
 
 import org.eclipse.jdt.core.dom.*
-import org.eclipse.jdt.internal.compiler.ast.CaseStatement
 
 import scala.collection.mutable.ArrayBuffer
 

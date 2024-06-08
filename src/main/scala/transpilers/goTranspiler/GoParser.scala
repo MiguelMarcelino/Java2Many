@@ -1,6 +1,7 @@
 package transpilers.goTranspiler
 
 import base.ASTParser
+import base.helpers.ASTNodeHelpers
 import org.eclipse.jdt.core.dom.*
 
 import scala.collection.mutable.ArrayBuffer
@@ -629,7 +630,18 @@ class GoParser extends ASTParser {
 
   override def visit(node: TextElement): String = { "" }
 
-  override def visit(node: ThisExpression): String = { "" }
+  override def visit(node: ThisExpression): String = {
+    // Check the arguments of the method where it is being called and create an assignment
+    // to the class variable
+    val parentClassNode =
+      ASTNodeHelpers.findParentNode(node, classOf[TypeDeclaration])
+    parentClassNode match {
+      case Some(parentClass) =>
+        val className = parentClass.getName.getIdentifier
+        className.head.toLower +: className.tail
+      case None => "this"
+    }
+  }
 
   override def visit(node: ThrowStatement): String = { "" }
 

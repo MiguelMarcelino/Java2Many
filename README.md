@@ -13,7 +13,7 @@ Java to Many Transpiler is a transpiler tool designed to convert Java code into 
 To run Java2Many, you may use the following command
 
 ```bash
-java2scala [--file file] [--projectDir dir] [--language dir] [--target dir]
+java2many [--file file] [--projectDir dir] [--language dir] [--target dir]
 ```
 
 - `file`: The file you want to transpile

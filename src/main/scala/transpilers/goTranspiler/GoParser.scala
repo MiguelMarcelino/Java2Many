@@ -30,6 +30,22 @@ class GoParser extends ASTParser {
     "System.err" -> "os.Stderr"
   )
 
+  override protected val operatorMap: Map[Assignment.Operator, String] =
+    Map(
+      Assignment.Operator.ASSIGN -> ":=",
+      Assignment.Operator.PLUS_ASSIGN -> "+=",
+      Assignment.Operator.MINUS_ASSIGN -> "-=",
+      Assignment.Operator.TIMES_ASSIGN -> "*=",
+      Assignment.Operator.DIVIDE_ASSIGN -> "/=",
+      Assignment.Operator.BIT_AND_ASSIGN -> "&=",
+      Assignment.Operator.BIT_OR_ASSIGN -> "|=",
+      Assignment.Operator.BIT_XOR_ASSIGN -> "^=",
+      Assignment.Operator.REMAINDER_ASSIGN -> "%=",
+      Assignment.Operator.LEFT_SHIFT_ASSIGN -> "<<=",
+      Assignment.Operator.RIGHT_SHIFT_SIGNED_ASSIGN -> ">>=",
+      Assignment.Operator.RIGHT_SHIFT_UNSIGNED_ASSIGN -> ">>>="
+    )
+
   override protected val importsList = ArrayBuffer[String]()
 
   private def addImport(importName: String): Unit = {
@@ -130,7 +146,12 @@ class GoParser extends ASTParser {
   override def visit(node: Assignment): String = {
     val leftHandSide = visit(node.getLeftHandSide)
     val rightHandSide = visit(node.getRightHandSide)
-    s"$leftHandSide := $rightHandSide"
+    val operator = operatorMap.get(node.getOperator) match {
+      case Some(value) => value
+      case None        => node.getOperator.toString
+    }
+
+    s"$leftHandSide $operator $rightHandSide"
   }
 
   override def visit(node: Block): String = {
@@ -263,6 +284,7 @@ class GoParser extends ASTParser {
   override def visit(node: DoStatement): String = {
     val body = visit(node.getBody)
     val expression = visit(node.getExpression)
+
     // TODO: Check if this is correct
     // There is no do while statement in Go, so we use a for loop
     s"""for $expression {
@@ -310,7 +332,28 @@ class GoParser extends ASTParser {
   override def visit(node: ForStatement): String = {
     val nodeBody = visit(node.getBody)
     val expression = visit(node.getExpression)
-    s"""for ($expression) {
+
+    val initializer = node
+      .initializers()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    val updaters = node
+      .updaters()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"""for $initializer; $expression; $updaters  {
        |  $nodeBody
        |}""".stripMargin
   }
@@ -349,7 +392,12 @@ class GoParser extends ASTParser {
     s"""import \"${node.getName}\""""
   }
 
-  override def visit(node: InfixExpression): String = { "" }
+  override def visit(node: InfixExpression): String = {
+    val leftOperand = visit(node.getLeftOperand)
+    val operator = node.getOperator.toString
+    val rightOperand = visit(node.getRightOperand)
+    s"$leftOperand $operator $rightOperand"
+  }
 
   override def visit(node: Initializer): String = {
     visit(node.getBody)
@@ -384,9 +432,30 @@ class GoParser extends ASTParser {
 
   override def visit(node: MemberValuePair): String = { "" }
 
-  override def visit(node: MethodRef): String = { "" }
+  override def visit(node: MethodRef): String = {
+    val name = visit(node.getName)
+    val qualifier = node.getQualifier match {
+      case null => ""
+      case _    => visit(node.getQualifier)
+    }
+    val parameters = node
+      .parameters()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
 
-  override def visit(node: MethodRefParameter): String = { "" }
+    s"$qualifier.$name($parameters)"
+  }
+
+  override def visit(node: MethodRefParameter): String = {
+    val typeName = visit(node.getType)
+    val name = visit(node.getName)
+    s"$name $typeName"
+  }
 
   override def visit(node: MethodDeclaration): String = {
     val parameters = node
@@ -496,9 +565,26 @@ class GoParser extends ASTParser {
 
   override def visit(node: ModuleModifier): String = { "" }
 
-  override def visit(node: NameQualifiedType): String = { "" }
+  override def visit(node: NameQualifiedType): String = {
+    val qualifier = visit(node.getQualifier)
+    val name = visit(node.getName)
+    s"$qualifier.$name"
+  }
 
-  override def visit(node: NormalAnnotation): String = { "" }
+  override def visit(node: NormalAnnotation): String = {
+    val typeName = visit(node.getTypeName)
+    val values = node
+      .values()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"$typeName($values)"
+  }
 
   override def visit(node: NullLiteral): String = {
     "nil"
@@ -531,13 +617,23 @@ class GoParser extends ASTParser {
     s"$typeName $typeArguments"
   }
 
-  override def visit(node: ParenthesizedExpression): String = { "" }
+  override def visit(node: ParenthesizedExpression): String = {
+    visit(node.getExpression)
+  }
 
   override def visit(node: PatternInstanceofExpression): String = { "" }
 
-  override def visit(node: PostfixExpression): String = { "" }
+  override def visit(node: PostfixExpression): String = {
+    val operator = node.getOperator.toString
+    val operand = visit(node.getOperand)
+    s"$operand$operator"
+  }
 
-  override def visit(node: PrefixExpression): String = { "" }
+  override def visit(node: PrefixExpression): String = {
+    val operator = node.getOperator.toString
+    val operand = visit(node.getOperand)
+    s"$operator$operand"
+  }
 
   override def visit(node: ProvidesDirective): String = { "" }
 
@@ -575,6 +671,10 @@ class GoParser extends ASTParser {
   override def visit(node: SingleVariableDeclaration): String = {
     val typeName = visit(node.getType)
     val name = visit(node.getName)
+    val value = node.getInitializer match {
+      case null => ""
+      case _    => visit(node.getInitializer)
+    }
     s"$name $typeName"
   }
 
@@ -699,9 +799,8 @@ class GoParser extends ASTParser {
           visit(node)
         case _ => ""
       }
-      .mkString(", ")
 
-    s"$fragments: $typeName"
+    parseFragments(fragments, typeName)
   }
 
   override def visit(node: VariableDeclarationStatement): String = {
@@ -714,13 +813,38 @@ class GoParser extends ASTParser {
           visit(node)
         case _ => ""
       }
-      .mkString(", ")
 
-    s"$fragments: $typeName"
+    parseFragments(fragments, typeName)
+  }
+
+  private def parseFragments(
+      fragments: Array[String],
+      typeName: String
+  ): String = {
+    fragments
+      .map { fragment =>
+        val splitFrag = fragment.split("=")
+        splitFrag.length > 1 match {
+          case true =>
+            val declaration = splitFrag(0)
+            val value = splitFrag(1)
+            s"$declaration $typeName := $value"
+          case false =>
+            fragment
+        }
+      }
+      .mkString(", ")
   }
 
   override def visit(node: VariableDeclarationFragment): String = {
-    s"${node.getName.getIdentifier}"
+    node.getInitializer match {
+      case null =>
+        visit(node.getName)
+      case _ =>
+        val name = visit(node.getName)
+        val initializer = visit(node.getInitializer)
+        s"$name = $initializer"
+    }
   }
 
   override def visit(node: WhileStatement): String = {

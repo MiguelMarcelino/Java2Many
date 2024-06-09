@@ -141,14 +141,16 @@ trait ASTParser {
   }
 
   /** The map of types to their specific types in the target language.
-    * Every parser must define their own map.
     */
   protected val typesMap: Map[String, String]
 
   /** The map of calls to their specific calls in the target language.
-    * Every parser must define their own map.
     */
   protected val callsMap: Map[String, String]
+
+  /** The map of operators to their specific operators in the target language.
+    */
+  protected val operatorMap: Map[Assignment.Operator, String]
 
   /** A list of imports to be added to the target language code.
     */

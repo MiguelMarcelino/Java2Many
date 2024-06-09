@@ -1,5 +1,5 @@
 # Java2Many
-Java to Many Transpiler is a transpiler tool designed to convert Java code into multiple target programming languages. This repository offers a basic framework for developers aiming to translate Java code to other languages seamlessly. As of now, I am aiming to support the Go programming language, but the long-term idea is to support various popular programming languages, enabling cross-language compatibility.
+Java to Many Transpiler is a transpiler tool designed to convert Java code into multiple target programming languages. Utilizing the Eclipse Abstract Syntax Tree (AST), this project offers a basic framework for developers aiming to translate Java code to other languages seamlessly. As of now, I am aiming to support the Go programming language, but the long-term idea is to support various popular programming languages, enabling cross-language compatibility.
 
 ## Supported Languages
 - Go (Basic functionality, including the translation of Java classes to Go structs)

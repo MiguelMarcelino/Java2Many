@@ -284,6 +284,7 @@ class GoParser extends ASTParser {
   override def visit(node: DoStatement): String = {
     val body = visit(node.getBody)
     val expression = visit(node.getExpression)
+
     // TODO: Check if this is correct
     // There is no do while statement in Go, so we use a for loop
     s"""for $expression {
@@ -331,7 +332,28 @@ class GoParser extends ASTParser {
   override def visit(node: ForStatement): String = {
     val nodeBody = visit(node.getBody)
     val expression = visit(node.getExpression)
-    s"""for ($expression) {
+
+    val initializer = node
+      .initializers()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    val updaters = node
+      .updaters()
+      .toArray()
+      .map {
+        case node: ASTNode =>
+          visit(node)
+        case _ => ""
+      }
+      .mkString(", ")
+
+    s"""for $initializer; $expression; $updaters  {
        |  $nodeBody
        |}""".stripMargin
   }
@@ -602,7 +624,9 @@ class GoParser extends ASTParser {
   override def visit(node: PatternInstanceofExpression): String = { "" }
 
   override def visit(node: PostfixExpression): String = {
-    visit(node.getOperand)
+    val operator = node.getOperator.toString
+    val operand = visit(node.getOperand)
+    s"$operand$operator"
   }
 
   override def visit(node: PrefixExpression): String = {

@@ -488,7 +488,7 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
         """public class SomeClass {
           |  public void someMethod() {
           |     while (true) {
-          |         return;
+          |         break;
           |     }
           |  }
           |}""".stripMargin
@@ -499,7 +499,7 @@ class GoFileTranspilerSpecs extends AnyWordSpec {
           |
           |func someMethod(someClass SomeClass) {
           |    for true {
-          |        return
+          |        break
           |    }
           |}""".stripMargin
 
